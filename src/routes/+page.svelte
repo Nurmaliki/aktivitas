@@ -14,6 +14,7 @@
 	import StatCard from '$lib/components/StatCard.svelte';
 	import WeeklyChart from '$lib/components/WeeklyChart.svelte';
 	import StepCounterCard from '$lib/components/StepCounterCard.svelte';
+	import MissedActivitiesPanel from '$lib/components/MissedActivitiesPanel.svelte';
 
 	// `today` is set on the client so the date always reflects the user's locale.
 	let today = $state('');
@@ -153,6 +154,8 @@
 			<ProgressBar value={todayStats.completionRate} label="Progress hari ini" />
 		</div>
 	</section>
+
+	<MissedActivitiesPanel />
 
 	<StepCounterCard />
 

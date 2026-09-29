@@ -49,7 +49,15 @@ function normalizePriority(value: unknown): Priority {
 
 function normalizeStatus(value: unknown, completed: boolean): ActivityStatus {
 	if (value === 'completed' && !completed) return 'completed';
-	const valid: ActivityStatus[] = ['planned', 'running', 'paused', 'completed', 'skipped', 'missed'];
+	const valid: ActivityStatus[] = [
+		'planned',
+		'running',
+		'paused',
+		'completed',
+		'skipped',
+		'missed',
+		'cancelled'
+	];
 	if (typeof value === 'string' && valid.includes(value as ActivityStatus)) {
 		return value as ActivityStatus;
 	}

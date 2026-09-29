@@ -17,7 +17,8 @@ export type ActivityStatus =
 	| 'paused'
 	| 'completed'
 	| 'skipped'
-	| 'missed';
+	| 'missed'
+	| 'cancelled';
 
 export const ACTIVITY_STATUSES: ActivityStatus[] = [
 	'planned',
@@ -25,7 +26,8 @@ export const ACTIVITY_STATUSES: ActivityStatus[] = [
 	'paused',
 	'completed',
 	'skipped',
-	'missed'
+	'missed',
+	'cancelled'
 ];
 
 export type RecurrenceFrequency =

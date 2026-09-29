@@ -137,7 +137,7 @@ function stepsInRange(steps: StepRecord[], range: DateRange): StepRecord[] {
 function isMissedActivity(a: Activity, today: string): boolean {
 	if (a.completed) return false;
 	if (a.status === 'missed') return true;
-	if (a.status === 'skipped') return false;
+	if (a.status === 'skipped' || a.status === 'cancelled') return false;
 	// Scheduled in the past, still planned -> count as missed.
 	return a.date < today && (a.status ?? 'planned') === 'planned';
 }
