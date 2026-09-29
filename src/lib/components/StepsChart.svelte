@@ -30,32 +30,36 @@
 	</div>
 
 	<div class="chart-body">
-		{#if goal > 0}
-			<div class="goal-line" style:bottom="{goalPercent}%" aria-hidden="true"></div>
-		{/if}
-		<div class="day-grid" aria-label="Grafik langkah per tanggal pada {monthLabel}">
-			{#each days as day (day.date)}
-				<button
-					type="button"
-					class="day-cell"
-					class:has-data={day.steps > 0}
-					class:goal-met={goal > 0 && day.steps >= goal}
-					class:selected={selectedDate === day.date}
-					onclick={() => onSelect?.(day.date)}
-					title="{formatDisplayDate(day.date)}: {day.steps.toLocaleString('id-ID')} langkah"
-					aria-label="{formatDisplayDate(day.date)}: {day.steps} langkah"
-				>
-					<span class="day-column" aria-hidden="true">
-						<span
-							class="day-bar"
-							style:height="{day.steps === 0
-								? 0
-								: Math.max(4, (day.steps / maxValue) * 100)}%"
-						></span>
-					</span>
-					<span class="day-label">{day.label}</span>
-				</button>
-			{/each}
+		<div class="chart-scroll table-scroll">
+			<div class="chart-inner">
+				{#if goal > 0}
+					<div class="goal-line" style:bottom="{goalPercent}%" aria-hidden="true"></div>
+				{/if}
+				<div class="day-grid" aria-label="Grafik langkah per tanggal pada {monthLabel}">
+					{#each days as day (day.date)}
+						<button
+							type="button"
+							class="day-cell"
+							class:has-data={day.steps > 0}
+							class:goal-met={goal > 0 && day.steps >= goal}
+							class:selected={selectedDate === day.date}
+							onclick={() => onSelect?.(day.date)}
+							title="{formatDisplayDate(day.date)}: {day.steps.toLocaleString('id-ID')} langkah"
+							aria-label="{formatDisplayDate(day.date)}: {day.steps} langkah"
+						>
+							<span class="day-column" aria-hidden="true">
+								<span
+									class="day-bar"
+									style:height="{day.steps === 0
+										? 0
+										: Math.max(4, (day.steps / maxValue) * 100)}%"
+								></span>
+							</span>
+							<span class="day-label">{day.label}</span>
+						</button>
+					{/each}
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -100,8 +104,22 @@
 	}
 
 	.chart-body {
-		position: relative;
 		padding-top: 0.25rem;
+	}
+
+	.chart-scroll {
+		padding-bottom: var(--space-1);
+	}
+
+	.chart-inner {
+		position: relative;
+		min-width: 34rem;
+	}
+
+	@media (min-width: 720px) {
+		.chart-inner {
+			min-width: 0;
+		}
 	}
 
 	.goal-line {

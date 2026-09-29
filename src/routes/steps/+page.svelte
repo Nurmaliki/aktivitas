@@ -279,15 +279,16 @@
 	<meta name="description" content="Penghitung langkah harian dengan target, grafik, dan impor data." />
 </svelte:head>
 
-<div class="page-header">
-	<div>
-		<h1 class="page-title">Penghitung Langkah</h1>
-		<p class="page-subtitle">
-			Pantau langkah harian dari sensor perangkat, input manual, atau impor file kesehatan.
-		</p>
+<div class="container page">
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">Penghitung Langkah</h1>
+			<p class="page-subtitle">
+				Pantau langkah harian dari sensor perangkat, input manual, atau impor file kesehatan.
+			</p>
+		</div>
+		<p class="today-chip">{formatHeaderDate(reference)}</p>
 	</div>
-	<p class="today-chip">{formatHeaderDate(reference)}</p>
-</div>
 
 {#if stepStore.loading}
 	<div class="alert alert-info" role="status">Memuat data langkah…</div>
@@ -300,7 +301,7 @@
 	<p class="alert alert-error" role="alert">{feedbackError}</p>
 {/if}
 
-<section class="card hero" aria-labelledby="today-steps-title">
+<section class="card" aria-labelledby="today-steps-title">
 	<h2 id="today-steps-title" class="sr-only">Langkah hari ini</h2>
 	<div class="hero-top">
 		<div class="hero-count">
@@ -482,7 +483,7 @@
 			</div>
 		</div>
 
-		<div class="table-wrapper">
+		<div class="table-scroll table-wrapper">
 			<table class="data-table">
 				<thead>
 					<tr>
@@ -609,6 +610,7 @@
 		Angka jarak dan kalori adalah estimasi kasar, bukan pengukuran medis. Data sensor hanya perkiraan.
 	</p>
 </section>
+</div>
 
 <ConfirmDialog
 	open={replaceConfirmOpen}
@@ -640,7 +642,6 @@
 		justify-content: space-between;
 		gap: var(--space-4);
 		flex-wrap: wrap;
-		margin-bottom: var(--space-5);
 	}
 
 	.page-title {
@@ -661,10 +662,6 @@
 		padding: 0.4rem 0.85rem;
 		font-size: 0.85rem;
 		color: var(--color-text-muted);
-	}
-
-	.hero {
-		margin-bottom: var(--space-5);
 	}
 
 	.hero-top {
@@ -710,7 +707,6 @@
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: var(--space-4);
-		margin-bottom: var(--space-5);
 	}
 
 	.button-row {
@@ -724,7 +720,6 @@
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: var(--space-4);
-		margin-bottom: var(--space-5);
 	}
 
 	.sensor-status {
@@ -746,11 +741,11 @@
 
 	.table-wrapper {
 		margin-top: var(--space-4);
-		overflow-x: auto;
 	}
 
 	.data-table {
 		width: 100%;
+		min-width: 32rem;
 		border-collapse: collapse;
 		font-size: 0.9rem;
 	}

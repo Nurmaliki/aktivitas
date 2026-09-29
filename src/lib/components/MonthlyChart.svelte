@@ -21,26 +21,28 @@
 		<p class="chart-legend muted text-sm">Klik batang untuk melihat detail hari</p>
 	</div>
 
-	<div class="day-grid" aria-label="Grafik aktivitas per tanggal pada {monthLabel}">
-		{#each days as day (day.date)}
-			<button
-				type="button"
-				class="day-cell"
-				class:has-data={day.total > 0}
-				class:selected={selectedDate === day.date}
-				onclick={() => onSelect?.(day.date)}
-				title="{formatDisplayDate(day.date)}: {day.completed}/{day.total} selesai ({day.totalDuration} menit)"
-				aria-label="{formatDisplayDate(day.date)}: {day.total} aktivitas"
-			>
-				<span class="day-column" aria-hidden="true">
-					<span
-						class="day-bar"
-						style:height="{day.total === 0 ? 0 : Math.max(10, (day.total / maxTotal) * 100)}%"
-					></span>
-				</span>
-				<span class="day-label">{day.label}</span>
-			</button>
-		{/each}
+	<div class="day-scroll table-scroll">
+		<div class="day-grid" aria-label="Grafik aktivitas per tanggal pada {monthLabel}">
+			{#each days as day (day.date)}
+				<button
+					type="button"
+					class="day-cell"
+					class:has-data={day.total > 0}
+					class:selected={selectedDate === day.date}
+					onclick={() => onSelect?.(day.date)}
+					title="{formatDisplayDate(day.date)}: {day.completed}/{day.total} selesai ({day.totalDuration} menit)"
+					aria-label="{formatDisplayDate(day.date)}: {day.total} aktivitas"
+				>
+					<span class="day-column" aria-hidden="true">
+						<span
+							class="day-bar"
+							style:height="{day.total === 0 ? 0 : Math.max(10, (day.total / maxTotal) * 100)}%"
+						></span>
+					</span>
+					<span class="day-label">{day.label}</span>
+				</button>
+			{/each}
+		</div>
 	</div>
 
 	<table class="sr-only">
@@ -81,11 +83,23 @@
 		font-weight: 700;
 	}
 
+	.day-scroll {
+		/* Thin scrollbar-aware wrapper so 31 bars don't get squashed on phones. */
+		padding-bottom: var(--space-1);
+	}
+
 	.day-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(1.75rem, 1fr));
 		gap: 0.35rem;
 		align-items: end;
+		min-width: 34rem;
+	}
+
+	@media (min-width: 720px) {
+		.day-grid {
+			min-width: 0;
+		}
 	}
 
 	.day-cell {

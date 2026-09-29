@@ -195,9 +195,19 @@
 	}
 
 	@media (max-width: 480px) {
+		.activity-item {
+			gap: var(--space-2);
+			padding: var(--space-3) 0;
+		}
+
 		.activity-actions {
 			flex-direction: column;
 			align-items: flex-end;
+			gap: 0;
+		}
+
+		.activity-actions .btn-sm {
+			padding: 0.3rem 0.5rem;
 		}
 	}
 </style>

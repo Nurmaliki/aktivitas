@@ -178,6 +178,8 @@
 		padding: 0;
 		max-width: 34rem;
 		width: calc(100% - 2rem);
+		max-height: calc(100dvh - 2rem);
+		overflow-y: auto;
 		box-shadow: var(--shadow-lg);
 		color: var(--color-text);
 	}

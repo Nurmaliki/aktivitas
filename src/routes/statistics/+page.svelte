@@ -261,26 +261,28 @@
 
 		<section class="card" aria-labelledby="weekly-summary-title">
 			<h2 id="weekly-summary-title" class="card-title">Ringkasan 7 Hari Terakhir</h2>
-			<table class="weekly-table">
-				<thead>
-					<tr>
-						<th scope="col">Tanggal</th>
-						<th scope="col">Aktivitas</th>
-						<th scope="col">Selesai</th>
-						<th scope="col">Durasi</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each weekly as day (day.date)}
+			<div class="table-scroll">
+				<table class="weekly-table">
+					<thead>
 						<tr>
-							<td>{formatHeaderDate(day.date)}</td>
-							<td>{day.total}</td>
-							<td>{day.completed}</td>
-							<td>{formatDuration(day.totalDuration)}</td>
+							<th scope="col">Tanggal</th>
+							<th scope="col">Aktivitas</th>
+							<th scope="col">Selesai</th>
+							<th scope="col">Durasi</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{#each weekly as day (day.date)}
+							<tr>
+								<td>{formatHeaderDate(day.date)}</td>
+								<td>{day.total}</td>
+								<td>{day.completed}</td>
+								<td>{formatDuration(day.totalDuration)}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		</section>
 	{/if}
 

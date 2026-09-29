@@ -57,6 +57,10 @@
 		height: 3.75rem;
 	}
 
+	nav {
+		min-width: 0;
+	}
+
 	.brand {
 		display: inline-flex;
 		align-items: center;
@@ -64,6 +68,7 @@
 		text-decoration: none;
 		color: var(--color-text);
 		font-weight: 700;
+		flex-shrink: 0;
 	}
 
 	.brand-mark {
@@ -88,6 +93,13 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+	}
+
+	.nav-list::-webkit-scrollbar {
+		display: none;
 	}
 
 	.nav-link {
@@ -98,6 +110,7 @@
 		color: var(--color-text-muted);
 		font-size: 0.9rem;
 		font-weight: 600;
+		white-space: nowrap;
 		transition: background-color 0.15s ease, color 0.15s ease;
 	}
 
@@ -112,8 +125,18 @@
 	}
 
 	@media (max-width: 480px) {
+		.navbar-inner {
+			gap: var(--space-2);
+			height: 3.5rem;
+		}
+
 		.brand-name {
 			display: none;
+		}
+
+		.nav-link {
+			padding: 0.4rem 0.6rem;
+			font-size: 0.85rem;
 		}
 	}
 </style>

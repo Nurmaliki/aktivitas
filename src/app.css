@@ -94,6 +94,11 @@ button {
 	padding: 0 var(--space-4);
 }
 
+main {
+	/* Let long tables/charts scroll instead of breaking the page layout. */
+	min-width: 0;
+}
+
 .page {
 	padding: var(--space-6) 0 var(--space-10);
 	display: flex;
@@ -131,12 +136,17 @@ button {
 	font-weight: 600;
 	line-height: 1.2;
 	cursor: pointer;
+	text-decoration: none;
 	transition:
 		background-color 0.15s ease,
 		border-color 0.15s ease,
 		color 0.15s ease,
 		box-shadow 0.15s ease;
 	white-space: nowrap;
+}
+
+a.btn:hover {
+	text-decoration: none;
 }
 
 .btn:disabled {
@@ -363,12 +373,60 @@ button {
 	margin: -1px;
 	overflow: hidden;
 	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
 	white-space: nowrap;
 	border: 0;
+	/* Prevent the visually-hidden content (e.g. wide a11y tables) from
+	   contributing to the document's horizontal scroll width on mobile. */
+	max-width: 1px;
+	max-height: 1px;
+}
+
+/* A visually-hidden <table> still lays out its intrinsic width, which can
+   widen the page on small screens. Force fixed layout so it collapses. */
+table.sr-only {
+	table-layout: fixed;
+	max-width: 1px;
+	border-collapse: collapse;
+}
+
+table.sr-only th,
+table.sr-only td {
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+/* Horizontal scroll container for wide tables on small screens. */
+.table-scroll {
+	width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.table-scroll::-webkit-scrollbar {
+	height: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+	background-color: var(--color-border-strong);
+	border-radius: var(--radius-full);
 }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
+	:root {
+		--max-width: 100%;
+	}
+
+	.container {
+		padding: 0 var(--space-3);
+	}
+
+	.page {
+		padding: var(--space-5) 0 var(--space-8);
+		gap: var(--space-5);
+	}
+
 	.page-header h1 {
 		font-size: 1.4rem;
 	}
@@ -379,6 +437,24 @@ button {
 
 	.card {
 		padding: var(--space-4);
+	}
+
+	/* Make tap targets comfortable on touch screens. */
+	.btn {
+		padding: 0.6rem 1rem;
+	}
+
+	.btn-sm {
+		padding: 0.45rem 0.75rem;
+		font-size: 0.82rem;
+		border-radius: var(--radius-md);
+	}
+}
+
+/* Any element that can overflow horizontally gets a scroll affordance. */
+@media (max-width: 720px) {
+	table:not(.sr-only) {
+		font-size: 0.85rem;
 	}
 }
 
