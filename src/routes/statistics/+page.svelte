@@ -10,6 +10,7 @@
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
 	import MonthlyChart from '$lib/components/MonthlyChart.svelte';
 	import StepsChart from '$lib/components/StepsChart.svelte';
+	import AnalyticsPanel from '$lib/components/AnalyticsPanel.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let today = $state('');
@@ -285,6 +286,8 @@
 			</div>
 		</section>
 	{/if}
+
+	<AnalyticsPanel {today} />
 
 	<section class="card" aria-labelledby="steps-stats-title">
 		<div class="spread">
