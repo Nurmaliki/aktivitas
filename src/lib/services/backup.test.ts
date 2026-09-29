@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Activity } from '$lib/types/activity';
+import type { StepRecord } from '$lib/types/steps';
 import { BACKUP_VERSION } from '$lib/types/activity';
 import {
 	backupFileName,
@@ -107,3 +108,129 @@ describe('parseBackupText', () => {
 		expect(result.valid).toBe(false);
 	});
 });
+
+// ---------------------------------------------------------------------------
+// v2: step + settings support (with backward compatibility for v1 files)
+// ---------------------------------------------------------------------------
+
+function makeStep(overrides: Partial<StepRecord> = {}): StepRecord {
+	return {
+		date: '2024-03-05',
+		steps: 8000,
+		source: 'manual',
+		updatedAt: '2024-03-05T08:00:00.000Z',
+		...overrides
+	};
+}
+
+/** Build a deliberately malformed step record for validation tests. */
+function makeRawStep(overrides: Record<string, unknown>): Record<string, unknown> {
+	return { ...makeStep(), ...overrides };
+}
+
+describe('createBackup (v2)', () => {
+	it('includes steps and settings', () => {
+		const backup = createBackup([makeActivity()], [makeStep()], { stepGoal: 12000 });
+		expect(backup.version).toBe(BACKUP_VERSION);
+		expect(backup.steps).toHaveLength(1);
+		expect(backup.settings?.stepGoal).toBe(12000);
+	});
+
+	it('defaults steps/settings when omitted', () => {
+		const backup = createBackup([makeActivity()]);
+		expect(backup.steps).toEqual([]);
+		expect(backup.settings).toEqual({ stepGoal: 10000 });
+	});
+});
+
+describe('validateBackup (v1 backward compatibility)', () => {
+	it('accepts a v1 file without steps/settings', () => {
+		const result = validateBackup({ version: 1, activities: [makeActivity()] });
+		expect(result.valid).toBe(true);
+		expect(result.steps).toEqual([]);
+		expect(result.hasSteps).toBe(false);
+		expect(result.settings.stepGoal).toBe(10000);
+	});
+});
+
+describe('validateBackup (v2)', () => {
+	it('accepts a file with valid steps and settings', () => {
+		const result = validateBackup({
+			version: 2,
+			activities: [makeActivity()],
+			steps: [makeStep()],
+			settings: { stepGoal: 12000 }
+		});
+		expect(result.valid).toBe(true);
+		expect(result.steps).toHaveLength(1);
+		expect(result.hasSteps).toBe(true);
+		expect(result.settings.stepGoal).toBe(12000);
+	});
+
+	it('rejects a steps section that is not an array', () => {
+		const result = validateBackup({ version: 2, activities: [], steps: 'nope' });
+		expect(result.valid).toBe(false);
+	});
+
+	it('rejects an invalid step record', () => {
+		const result = validateBackup({
+			version: 2,
+			activities: [],
+			steps: [makeStep(), { date: 'bad', steps: 5 }]
+		});
+		expect(result.valid).toBe(false);
+		expect(result.error).toMatch(/indeks 1/i);
+	});
+
+	it('rejects a step record with a negative or non-numeric count', () => {
+		expect(
+			validateBackup({ version: 2, activities: [], steps: [makeRawStep({ steps: -1 })] }).valid
+		).toBe(false);
+		expect(
+			validateBackup({ version: 2, activities: [], steps: [makeRawStep({ steps: 'many' })] }).valid
+		).toBe(false);
+	});
+
+	it('rejects a step record with an unknown source', () => {
+		const result = validateBackup({
+			version: 2,
+			activities: [],
+			steps: [makeRawStep({ source: 'telepathy' })]
+		});
+		expect(result.valid).toBe(false);
+	});
+
+	it('rejects a steps array exceeding the sane per-day maximum', () => {
+		const result = validateBackup({
+			version: 2,
+			activities: [],
+			steps: [makeRawStep({ steps: 999999 })]
+		});
+		expect(result.valid).toBe(false);
+	});
+
+	it('clamps an out-of-range step goal instead of rejecting', () => {
+		const result = validateBackup({
+			version: 2,
+			activities: [],
+			settings: { stepGoal: 10 }
+		});
+		expect(result.valid).toBe(true);
+		expect(result.settings.stepGoal).toBe(1000);
+	});
+
+	it('rejects settings that are not an object', () => {
+		const result = validateBackup({ version: 2, activities: [], settings: 'x' });
+		expect(result.valid).toBe(false);
+	});
+
+	it('rejects a non-numeric step goal', () => {
+		const result = validateBackup({
+			version: 2,
+			activities: [],
+			settings: { stepGoal: 'big' }
+		});
+		expect(result.valid).toBe(false);
+	});
+});
+

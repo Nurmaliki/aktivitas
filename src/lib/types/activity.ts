@@ -1,3 +1,5 @@
+import type { AppSettings, StepRecord } from '$lib/types/steps';
+
 export type ActivityCategory =
 	| 'Development'
 	| 'Meeting'
@@ -52,9 +54,13 @@ export interface BackupFile {
 	version: number;
 	exportedAt: string;
 	activities: Activity[];
+	/** v2+: optional step records. */
+	steps?: StepRecord[];
+	/** v2+: optional app settings (e.g. step goal). */
+	settings?: AppSettings;
 }
 
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 
 /** Hard limits to keep inputs reasonable and avoid pathological data. */
 export const MAX_NAME_LENGTH = 120;

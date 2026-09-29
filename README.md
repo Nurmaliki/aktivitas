@@ -19,8 +19,21 @@ database server, dan tanpa API eksternal.
   distribusi per kategori.
 - **Riwayat** — seluruh aktivitas, pencarian (nama + deskripsi, case-insensitive),
   filter tanggal/kategori/status, sorting, dan tombol reset filter.
+- **Penghitung langkah (step counter)** — catat langkah harian dengan tiga sumber:
+  - **Sensor perangkat** — deteksi langkah dari akselerometer via `DeviceMotionEvent`
+    (`motionSensor.ts`). Berlaku sebagai perkiraan, hanya di perangkat dengan sensor
+    gerakan (umumnya ponsel) dan hanya selama halaman terbuka.
+  - **Input manual** — isi total langkah atau tambahkan sejumlah langkah; berfungsi
+    di semua perangkat.
+  - **Impor** — masukkan data langkah dari file backup JSON.
+  - Target harian (default **10.000 langkah**) yang bisa diubah, progress bar,
+    serta perkiraan jarak (km) dan kalori.
+- **Statistik langkah** — total & rata-rata langkah, hari terbaik, perkiraan jarak
+  & kalori, ringkasan bulan berjalan (hari aktif & hari yang mencapai target), dan
+  grafik langkah harian.
 - **Backup & Restore** — export ke JSON dan import dengan pilihan **Merge**
-  atau **Replace** (dengan konfirmasi + validasi struktur file).
+  atau **Replace** (dengan konfirmasi + validasi struktur file); menyertakan
+  aktivitas, data langkah, dan pengaturan.
 - **Responsive** — mobile-first, nyaman di smartphone, tablet, dan desktop.
 - **Persisten** — data tetap ada setelah refresh maupun setelah browser ditutup.
 - **Empty states & error handling** — feedback yang jelas untuk semua kondisi.
@@ -96,19 +109,25 @@ src/
 │   │   ├── StatCard.svelte          # Kartu statistik
 │   │   ├── WeeklyChart.svelte       # Grafik 7 hari
 │   │   ├── MonthlyChart.svelte      # Grafik per tanggal (bulanan)
+│   │   ├── StepsChart.svelte        # Grafik langkah harian + garis target
+│   │   ├── StepCounterCard.svelte   # Kartu penghitung langkah (dashboard)
 │   │   ├── ProgressBar.svelte       # Progress bar
 │   │   ├── Navbar.svelte            # Navigasi
 │   │   └── ConfirmDialog.svelte      # Dialog konfirmasi
 │   ├── services/
-│   │   ├── db.ts                    # IndexedDB (CRUD + indexes)
+│   │   ├── db.ts                    # IndexedDB (CRUD + indexes + steps/settings)
+│   │   ├── motionSensor.ts          # Deteksi langkah via DeviceMotionEvent
 │   │   └── backup.ts                # Export / import + validasi
 │   ├── stores/
-│   │   └── activity.svelte.ts       # State management (Svelte 5 runes)
+│   │   ├── activity.svelte.ts       # State management aktivitas (Svelte 5 runes)
+│   │   └── steps.svelte.ts          # State management langkah + target
 │   ├── types/
-│   │   └── activity.ts              # Model & konstanta
+│   │   ├── activity.ts              # Model & konstanta aktivitas
+│   │   └── steps.ts                 # Model & konstanta langkah / settings
 │   └── utils/
 │       ├── date.ts                  # Utility tanggal lokal
-│       ├── statistics.ts            # Semua perhitungan statistik
+│       ├── statistics.ts            # Perhitungan statistik aktivitas
+│       ├── stepStatistics.ts        # Perhitungan statistik langkah
 │       └── validation.ts            # Validasi input & record
 ├── routes/
 │   ├── +layout.svelte
@@ -121,9 +140,13 @@ src/
 
 ## Data Storage
 
-Semua data disimpan di **IndexedDB browser** pada database `daily-activity-db`
-(object store `activities`). Aplikasi juga menggunakan `crypto.randomUUID()`
-untuk ID aktivitas.
+Semua data disimpan di **IndexedDB browser** pada database `daily-activity-db`:
+
+- object store `activities` — aktivitas harian
+- object store `steps` — total langkah per tanggal (satu record per hari)
+- object store `settings` — pengaturan aplikasi (target langkah harian)
+
+Aplikasi juga menggunakan `crypto.randomUUID()` untuk ID aktivitas.
 
 > **Penting — baca sebelum mengandalkan aplikasi ini:**
 >
@@ -136,6 +159,20 @@ untuk ID aktivitas.
 > - Gunakan tombol **Export Data** di halaman Statistik secara berkala untuk
 >   menyimpan cadangan dalam format JSON, dan gunakan **Import Data** untuk
 >   memulihkannya di browser/perangkat lain.
+
+### Catatan penghitung langkah
+
+- **Sensor perangkat** memakai `DeviceMotionEvent` (akselerometer) dengan algoritma
+  deteksi puncak sederhana. Akurasinya **tidak presisi** (bukan alat medis), hanya
+  berjalan di perangkat dengan sensor gerakan, dan hanya **selama halaman aplikasi
+  terbuka** (tab di background dapat menunda/menghentikan pembacaan).
+- **iOS 13+** memerlukan izin gerak eksplisit; permintaan izin muncul saat Anda
+  menekan tombol sensor (harus dipicu oleh interaksi pengguna).
+- Integrasi **Google Fit / Apple Health langsung dari web tidak didukung** karena
+  memerlukan backend + OAuth dan/atau hanya tersedia di aplikasi native. Sebagai
+  gantinya, gunakan **input manual** atau **Import** file JSON.
+- Angka **jarak** dan **kalori** hanyalah estimasi kasar (konstanta panjang langkah
+  dan kalori per langkah), bukan pengukuran klinis.
 
 ## Deploy to Vercel
 

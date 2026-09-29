@@ -1,9 +1,20 @@
 import type { Activity, ActivityInput } from '$lib/types/activity';
+import {
+	DEFAULT_SETTINGS,
+	MAX_STEPS_PER_DAY,
+	MIN_STEP_GOAL,
+	MAX_STEP_GOAL,
+	type AppSettings,
+	type StepRecord,
+	type StepSource
+} from '$lib/types/steps';
 import { isValidActivity } from '$lib/utils/validation';
 
 export const DB_NAME = 'daily-activity-db';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 export const STORE_NAME = 'activities';
+export const STEPS_STORE = 'steps';
+export const SETTINGS_STORE = 'settings';
 
 /** Custom error so callers can show friendly, human-readable messages. */
 export class DatabaseError extends Error {
@@ -40,6 +51,28 @@ export function generateId(): string {
 	});
 }
 
+/** Clamp a step goal into the allowed range, falling back to the default. */
+export function clampStepGoal(value: number): number {
+	if (!Number.isFinite(value)) return DEFAULT_SETTINGS.stepGoal;
+	return Math.min(MAX_STEP_GOAL, Math.max(MIN_STEP_GOAL, Math.round(value)));
+}
+
+const STEP_SOURCES: StepSource[] = ['sensor', 'manual', 'import'];
+
+/** Type guard for a step record read from storage or an imported file. */
+export function isValidStepRecord(value: unknown): value is StepRecord {
+	if (typeof value !== 'object' || value === null) return false;
+	const record = value as Record<string, unknown>;
+	if (typeof record.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(record.date)) return false;
+	if (typeof record.steps !== 'number' || !Number.isFinite(record.steps)) return false;
+	if (record.steps < 0 || record.steps > MAX_STEPS_PER_DAY) return false;
+	if (typeof record.source !== 'string' || !STEP_SOURCES.includes(record.source as StepSource)) {
+		return false;
+	}
+	if (typeof record.updatedAt !== 'string' || record.updatedAt.length === 0) return false;
+	return true;
+}
+
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 /**
@@ -71,6 +104,14 @@ export function openDatabase(): Promise<IDBDatabase> {
 				store.createIndex('category', 'category', { unique: false });
 				store.createIndex('completed', 'completed', { unique: false });
 				store.createIndex('createdAt', 'createdAt', { unique: false });
+			}
+			// v2: step counter stores.
+			if (!db.objectStoreNames.contains(STEPS_STORE)) {
+				const stepStore = db.createObjectStore(STEPS_STORE, { keyPath: 'date' });
+				stepStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+			}
+			if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+				db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
 			}
 		};
 
@@ -123,19 +164,20 @@ function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
 
 async function withStore<T>(
 	mode: IDBTransactionMode,
-	handler: (store: IDBObjectStore) => Promise<T> | T
+	handler: (store: IDBObjectStore) => Promise<T> | T,
+	storeName: string = STORE_NAME
 ): Promise<T> {
 	const db = await openDatabase();
 	return new Promise<T>((resolve, reject) => {
 		let transaction: IDBTransaction;
 		try {
-			transaction = db.transaction(STORE_NAME, mode);
+			transaction = db.transaction(storeName, mode);
 		} catch (error) {
 			reject(new DatabaseError('Gagal memulai transaksi database.', error));
 			return;
 		}
 
-		const store = transaction.objectStore(STORE_NAME);
+		const store = transaction.objectStore(storeName);
 		let result: T;
 
 		Promise.resolve(handler(store))
@@ -182,16 +224,17 @@ function waitForTransaction(transaction: IDBTransaction): Promise<void> {
  */
 async function withRawStore<T>(
 	mode: IDBTransactionMode,
-	handler: (store: IDBObjectStore, transaction: IDBTransaction) => Promise<T>
+	handler: (store: IDBObjectStore, transaction: IDBTransaction) => Promise<T>,
+	storeName: string = STORE_NAME
 ): Promise<T> {
 	const db = await openDatabase();
 	let transaction: IDBTransaction;
 	try {
-		transaction = db.transaction(STORE_NAME, mode);
+		transaction = db.transaction(storeName, mode);
 	} catch (error) {
 		throw new DatabaseError('Gagal memulai transaksi database.', error);
 	}
-	const store = transaction.objectStore(STORE_NAME);
+	const store = transaction.objectStore(storeName);
 	try {
 		return await handler(store, transaction);
 	} catch (error) {
@@ -324,4 +367,165 @@ export function mergeActivities(activities: Activity[]): Promise<number> {
 			};
 		});
 	});
+}
+
+// ---------------------------------------------------------------------------
+// Step counter (v2)
+// ---------------------------------------------------------------------------
+
+/** Read every step record. */
+export function getStepRecords(): Promise<StepRecord[]> {
+	return withStore(
+		'readonly',
+		async (store) => {
+			const raw = await requestToPromise(store.getAll());
+			return raw.filter(isValidStepRecord);
+		},
+		STEPS_STORE
+	);
+}
+
+/** Read a single day's step record. */
+export function getStepRecord(date: string): Promise<StepRecord | undefined> {
+	return withStore(
+		'readonly',
+		async (store) => {
+			const raw = await requestToPromise(store.get(date));
+			return isValidStepRecord(raw) ? raw : undefined;
+		},
+		STEPS_STORE
+	);
+}
+
+/** Upsert a day's step total. */
+export function putStepRecord(record: StepRecord): Promise<StepRecord> {
+	return withStore(
+		'readwrite',
+		async (store) => {
+			await requestToPromise(store.put(record));
+			return record;
+		},
+		STEPS_STORE
+	);
+}
+
+/** Delete a day's step record. */
+export function deleteStepRecord(date: string): Promise<void> {
+	return withStore(
+		'readwrite',
+		async (store) => {
+			await requestToPromise(store.delete(date));
+		},
+		STEPS_STORE
+	);
+}
+
+/** Remove all step records. */
+export function clearStepRecords(): Promise<void> {
+	return withStore(
+		'readwrite',
+		async (store) => {
+			await requestToPromise(store.clear());
+		},
+		STEPS_STORE
+	);
+}
+
+/** Replace all step records (used by the "Replace" import). */
+export function replaceStepRecords(records: StepRecord[]): Promise<void> {
+	return withRawStore(
+		'readwrite',
+		(store, transaction) => {
+			store.clear();
+			for (const record of records) store.put(record);
+			return waitForTransaction(transaction);
+		},
+		STEPS_STORE
+	);
+}
+
+/**
+ * Merge step records. For a date already present, keep the higher step total
+ * (a day's count should never go down when merging two sources).
+ * Returns how many records were newly inserted.
+ */
+export function mergeStepRecords(records: StepRecord[]): Promise<number> {
+	return withRawStore(
+		'readwrite',
+		(store, transaction) => {
+			let added = 0;
+			return new Promise<number>((resolve) => {
+				const keysRequest = store.getAllKeys();
+				keysRequest.onsuccess = () => {
+					const byDate = new Map<string, StepRecord>();
+					const allRequest = store.getAll();
+					allRequest.onsuccess = () => {
+						for (const value of allRequest.result as unknown[]) {
+							if (isValidStepRecord(value)) byDate.set(value.date, value);
+						}
+						for (const record of records) {
+							const existing = byDate.get(record.date);
+							if (!existing) {
+								store.put(record);
+								byDate.set(record.date, record);
+								added += 1;
+							} else if (record.steps > existing.steps) {
+								store.put(record);
+								byDate.set(record.date, record);
+							}
+						}
+						transaction.oncomplete = () => resolve(added);
+					};
+					allRequest.onerror = () => {
+						transaction.oncomplete = () => resolve(added);
+					};
+				};
+				keysRequest.onerror = () => {
+					transaction.oncomplete = () => resolve(added);
+				};
+			});
+		},
+		STEPS_STORE
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Settings (v2)
+// ---------------------------------------------------------------------------
+
+interface SettingsRow {
+	key: string;
+	value: unknown;
+}
+
+/** Read the app settings (falls back to defaults for missing keys). */
+export function getSettings(): Promise<AppSettings> {
+	return withStore(
+		'readonly',
+		async (store) => {
+			const raw = (await requestToPromise(store.getAll())) as unknown[];
+			const settings: AppSettings = { ...DEFAULT_SETTINGS };
+			for (const row of raw) {
+				if (typeof row !== 'object' || row === null) continue;
+				const { key, value } = row as SettingsRow;
+				if (key === 'stepGoal' && typeof value === 'number' && Number.isFinite(value)) {
+					settings.stepGoal = clampStepGoal(value);
+				}
+			}
+			return settings;
+		},
+		SETTINGS_STORE
+	);
+}
+
+/** Persist the app settings. */
+export function putSettings(settings: AppSettings): Promise<AppSettings> {
+	return withStore(
+		'readwrite',
+		async (store) => {
+			await requestToPromise(store.put({ key: 'stepGoal', value: settings.stepGoal }));
+			return settings;
+		},
+		SETTINGS_STORE
+	);
 }

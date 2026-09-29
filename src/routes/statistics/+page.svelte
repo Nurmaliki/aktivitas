@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Activity } from '$lib/types/activity';
 	import { activityStore } from '$lib/stores/activity.svelte.js';
+	import { stepStore } from '$lib/stores/steps.svelte.js';
 	import { getLocalDateString, formatHeaderDate } from '$lib/utils/date';
 	import { formatDuration, getMonthlyStats, getWeeklyStats } from '$lib/utils/statistics';
-	import { exportData, parseBackupText } from '$lib/services/backup';
+	import { getMonthlyStepStats, computeStepStats } from '$lib/utils/stepStatistics';
+	import { exportData, parseBackupText, importData, type BackupValidationResult } from '$lib/services/backup';
 	import StatCard from '$lib/components/StatCard.svelte';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
 	import MonthlyChart from '$lib/components/MonthlyChart.svelte';
+	import StepsChart from '$lib/components/StepsChart.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let today = $state('');
@@ -19,16 +21,25 @@
 	const monthly = $derived(getMonthlyStats(activityStore.activities, reference));
 	const weekly = $derived(getWeeklyStats(activityStore.activities, 7, reference));
 
+	// Step statistics (derived from the step store).
+	const stepMonthly = $derived(
+		getMonthlyStepStats(stepStore.records, reference, stepStore.goal)
+	);
+	const stepOverall = $derived(computeStepStats(stepStore.records));
+
 	// Selected day inside the monthly chart.
 	let selectedDate = $state<string | null>(null);
 	const selectedDayStats = $derived(
 		selectedDate ? monthly.daily.find((day) => day.date === selectedDate) ?? null : null
 	);
+	const selectedDaySteps = $derived(
+		selectedDate ? stepMonthly.daily.find((day) => day.date === selectedDate) ?? null : null
+	);
 
 	// ----- Backup / restore state -----
 	let importInput = $state<HTMLInputElement | null>(null);
 	let modeDialog = $state<HTMLDialogElement | null>(null);
-	let pendingImport = $state<Activity[] | null>(null);
+	let pendingImport = $state<BackupValidationResult | null>(null);
 	let pendingFileName = $state('');
 	let replaceConfirmOpen = $state(false);
 	let actionMessage = $state('');
@@ -48,8 +59,8 @@
 		actionError = '';
 		busy = true;
 		try {
-			const count = await exportData();
-			actionMessage = `Berhasil mengekspor ${count} aktivitas.`;
+			const summary = await exportData();
+			actionMessage = `Berhasil mengekspor ${summary.activities} aktivitas dan ${summary.steps} hari data langkah.`;
 		} catch (error) {
 			actionError =
 				error instanceof Error ? error.message : 'Gagal mengekspor data.';
@@ -72,7 +83,7 @@
 				actionError = result.error ?? 'File backup tidak valid.';
 				return;
 			}
-			pendingImport = result.activities;
+			pendingImport = result;
 			pendingFileName = file.name;
 		} catch {
 			actionError = 'Gagal membaca file. Pastikan file berisi JSON yang valid.';
@@ -85,21 +96,24 @@
 	async function runImport(mode: 'merge' | 'replace') {
 		if (!pendingImport) return;
 		busy = true;
-		const result = await activityStore.runImport(pendingImport, mode);
-		busy = false;
-		replaceConfirmOpen = false;
-
-		if (result) {
-			actionError = 'Gagal mengimpor data dari file backup.';
-			return;
+		actionError = '';
+		try {
+			const result = await importData(pendingImport, mode);
+			await activityStore.refresh();
+			await stepStore.refresh();
+			actionMessage =
+				mode === 'replace'
+					? `Berhasil mengganti data dengan ${result.activities} aktivitas dan ${result.steps} hari data langkah dari "${pendingFileName}".`
+					: `Berhasil menggabungkan aktivitas dari "${pendingFileName}".`;
+			pendingImport = null;
+			pendingFileName = '';
+		} catch (error) {
+			actionError =
+				error instanceof Error ? error.message : 'Gagal mengimpor data dari file backup.';
+		} finally {
+			busy = false;
+			replaceConfirmOpen = false;
 		}
-		const count = pendingImport.length;
-		actionMessage =
-			mode === 'replace'
-				? `Berhasil mengganti data dengan ${count} aktivitas dari "${pendingFileName}".`
-				: `Berhasil menggabungkan aktivitas dari "${pendingFileName}".`;
-		pendingImport = null;
-		pendingFileName = '';
 	}
 
 	function cancelImport() {
@@ -270,6 +284,102 @@
 		</section>
 	{/if}
 
+	<section class="card" aria-labelledby="steps-stats-title">
+		<div class="spread">
+			<div>
+				<h2 id="steps-stats-title" class="card-title">Statistik Langkah</h2>
+				<p class="card-subtitle">
+					Target harian {stepStore.goal.toLocaleString('id-ID')} langkah · {stepOverall.days} hari
+					terekam
+				</p>
+			</div>
+		</div>
+
+		{#if stepStore.records.length === 0}
+			<div class="empty-state">
+				<div class="empty-icon" aria-hidden="true">👟</div>
+				<p class="empty-title">Belum ada data langkah.</p>
+				<p class="empty-message">
+					Catat langkah dari dashboard (input manual, sensor, atau impor file) untuk melihat
+					statistiknya di sini.
+				</p>
+				<a class="btn btn-primary" href="/">Catat Langkah</a>
+			</div>
+		{:else}
+			<div class="stat-grid mini">
+				<StatCard
+					label="Total Langkah"
+					value={stepOverall.totalSteps.toLocaleString('id-ID')}
+					hint="seluruh riwayat"
+					accent="primary"
+				/>
+				<StatCard
+					label="Rata-rata Harian"
+					value={stepOverall.averageSteps.toLocaleString('id-ID')}
+					hint="per hari terekam"
+					accent="success"
+				/>
+				<StatCard
+					label="Hari Terbaik"
+					value={stepOverall.bestDaySteps.toLocaleString('id-ID')}
+					hint={stepOverall.bestDayDate ? formatHeaderDate(stepOverall.bestDayDate) : '—'}
+				/>
+				<StatCard
+					label="Perkiraan Jarak"
+					value="{stepOverall.totalDistanceKm} km"
+					hint="≈ {stepOverall.totalCalories.toLocaleString('id-ID')} kkal"
+				/>
+			</div>
+
+			<div class="mini-grid">
+				<StatCard
+					label="Total Bulan Ini"
+					value={stepMonthly.stats.totalSteps.toLocaleString('id-ID')}
+					hint={stepMonthly.monthLabel}
+				/>
+				<StatCard
+					label="Hari Aktif"
+					value={String(stepMonthly.activeDays)}
+					hint="hari ada langkah"
+				/>
+				<StatCard
+					label="Target Tercapai"
+					value="{stepMonthly.daysGoalMet} hari"
+					hint="≥ target harian"
+				/>
+			</div>
+
+			<div class="steps-chart-wrapper">
+				<StepsChart
+					days={stepMonthly.daily}
+					monthLabel={stepMonthly.monthLabel}
+					goal={stepStore.goal}
+					onSelect={(date) => (selectedDate = selectedDate === date ? null : date)}
+					{selectedDate}
+				/>
+			</div>
+			{#if selectedDaySteps}
+				<div class="selected-detail">
+					<h3 class="detail-title">{formatHeaderDate(selectedDaySteps.date)}</h3>
+					<div class="detail-row">
+						<span>Langkah</span>
+						<strong>{selectedDaySteps.steps.toLocaleString('id-ID')}</strong>
+					</div>
+					<div class="detail-row">
+						<span>Progress target</span>
+						<strong>{selectedDaySteps.goalProgress}%</strong>
+					</div>
+					{#if selectedDayStats}
+						<div class="detail-row">
+							<span>Aktivitas</span>
+							<strong>{selectedDayStats.total}</strong>
+						</div>
+					{/if}
+				</div>
+			{/if}
+		{/if}
+	</section>
+
 	<section class="card" aria-labelledby="backup-title">
 		<h2 id="backup-title" class="card-title">Backup & Restore Data</h2>
 		<p class="card-subtitle">
@@ -322,8 +432,10 @@
 	<div class="mode-body">
 		<h2 id="import-mode-title" class="mode-title">Impor data backup</h2>
 		<p class="mode-message">
-			Ditemukan <strong>{pendingImport?.length ?? 0}</strong> aktivitas pada
-			<strong>"{pendingFileName}"</strong>. Pilih cara mengimpor data.
+			Ditemukan <strong>{pendingImport?.activities.length ?? 0}</strong> aktivitas{pendingImport &&
+			pendingImport.hasSteps
+				? ` dan ${pendingImport.steps.length} hari data langkah`
+				: ''} pada <strong>"{pendingFileName}"</strong>. Pilih cara mengimpor data.
 		</p>
 		<ul class="mode-options">
 			<li><strong>Gabungkan</strong> — tambahkan aktivitas baru tanpa menghapus data yang ada.</li>
@@ -382,6 +494,16 @@
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: var(--space-4);
 		margin-top: var(--space-4);
+	}
+
+	.stat-grid.mini {
+		margin-top: var(--space-4);
+	}
+
+	.steps-chart-wrapper {
+		margin-top: var(--space-5);
+		padding-top: var(--space-5);
+		border-top: 1px solid var(--color-border);
 	}
 
 	.progress-card {
