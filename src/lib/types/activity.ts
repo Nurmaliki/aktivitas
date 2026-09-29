@@ -111,9 +111,15 @@ export interface BackupFile {
 	steps?: StepRecord[];
 	/** v2+: optional app settings (e.g. step goal). */
 	settings?: AppSettings;
+	/** v3+: optional habits. */
+	habits?: import('$lib/types/habit').Habit[];
+	/** v3+: optional habit logs. */
+	habitLogs?: import('$lib/types/habit').HabitLog[];
+	/** v3+: optional focus sessions. */
+	focusSessions?: import('$lib/types/focus').FocusSession[];
 }
 
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
 
 /** Hard limits to keep inputs reasonable and avoid pathological data. */
 export const MAX_NAME_LENGTH = 120;

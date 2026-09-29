@@ -1,6 +1,9 @@
 import { BACKUP_VERSION, type Activity, type BackupFile } from '$lib/types/activity';
 import { DEFAULT_SETTINGS, type AppSettings, type StepRecord } from '$lib/types/steps';
+import type { Habit, HabitLog } from '$lib/types/habit';
+import type { FocusSession } from '$lib/types/focus';
 import { isValidActivity } from '$lib/utils/validation';
+import { isValidHabit, isValidHabitLog, isValidFocusSession } from '$lib/utils/validators';
 import { isValidStepRecord, clampStepGoal } from '$lib/services/db';
 import { getLocalDateString } from '$lib/utils/date';
 import {
@@ -13,6 +16,18 @@ import {
 	replaceActivities,
 	replaceStepRecords
 } from '$lib/services/db';
+import {
+	getHabits,
+	getHabitLogs,
+	replaceHabitsAndLogs,
+	mergeHabits,
+	mergeHabitLogs
+} from '$lib/repositories/habitRepository';
+import {
+	getFocusSessions,
+	replaceFocusSessions,
+	mergeFocusSessions
+} from '$lib/repositories/focusRepository';
 
 export interface BackupValidationResult {
 	valid: boolean;
@@ -23,20 +38,32 @@ export interface BackupValidationResult {
 	settings: AppSettings;
 	/** Backward-compatible flag: true when the steps section was present. */
 	hasSteps: boolean;
+	/** v3+: habits (empty for v1/v2 files). */
+	habits: Habit[];
+	/** v3+: habit logs (empty for v1/v2 files). */
+	habitLogs: HabitLog[];
+	/** v3+: focus sessions (empty for v1/v2 files). */
+	focusSessions: FocusSession[];
 }
 
 /** Build a backup object from the current data. */
 export function createBackup(
 	activities: Activity[],
 	steps: StepRecord[] = [],
-	settings: AppSettings = { ...DEFAULT_SETTINGS }
+	settings: AppSettings = { ...DEFAULT_SETTINGS },
+	habits: Habit[] = [],
+	habitLogs: HabitLog[] = [],
+	focusSessions: FocusSession[] = []
 ): BackupFile {
 	return {
 		version: BACKUP_VERSION,
 		exportedAt: new Date().toISOString(),
 		activities,
 		steps,
-		settings
+		settings,
+		habits,
+		habitLogs,
+		focusSessions
 	};
 }
 
@@ -59,7 +86,10 @@ export function validateBackup(data: unknown): BackupValidationResult {
 		activities: [],
 		steps: [],
 		settings: { ...DEFAULT_SETTINGS },
-		hasSteps: false
+		hasSteps: false,
+		habits: [],
+		habitLogs: [],
+		focusSessions: []
 	});
 
 	if (typeof data !== 'object' || data === null || Array.isArray(data)) {
@@ -124,7 +154,58 @@ export function validateBackup(data: unknown): BackupValidationResult {
 		}
 	}
 
-	return { valid: true, activities, steps, settings, hasSteps };
+	// v3+: habits (optional).
+	const habits: Habit[] = [];
+	if (record.habits != null) {
+		if (!Array.isArray(record.habits)) {
+			return fail('Bagian "habits" harus berupa daftar.');
+		}
+		for (let i = 0; i < record.habits.length; i++) {
+			if (!isValidHabit(record.habits[i])) {
+				return fail(`Kebiasaan pada indeks ${i} tidak valid atau rusak.`);
+			}
+			habits.push(record.habits[i] as Habit);
+		}
+	}
+
+	// v3+: habit logs (optional).
+	const habitLogs: HabitLog[] = [];
+	if (record.habitLogs != null) {
+		if (!Array.isArray(record.habitLogs)) {
+			return fail('Bagian "habitLogs" harus berupa daftar.');
+		}
+		for (let i = 0; i < record.habitLogs.length; i++) {
+			if (!isValidHabitLog(record.habitLogs[i])) {
+				return fail(`Log kebiasaan pada indeks ${i} tidak valid atau rusak.`);
+			}
+			habitLogs.push(record.habitLogs[i] as HabitLog);
+		}
+	}
+
+	// v3+: focus sessions (optional).
+	const focusSessions: FocusSession[] = [];
+	if (record.focusSessions != null) {
+		if (!Array.isArray(record.focusSessions)) {
+			return fail('Bagian "focusSessions" harus berupa daftar.');
+		}
+		for (let i = 0; i < record.focusSessions.length; i++) {
+			if (!isValidFocusSession(record.focusSessions[i])) {
+				return fail(`Sesi fokus pada indeks ${i} tidak valid atau rusak.`);
+			}
+			focusSessions.push(record.focusSessions[i] as FocusSession);
+		}
+	}
+
+	return {
+		valid: true,
+		activities,
+		steps,
+		settings,
+		hasSteps,
+		habits,
+		habitLogs,
+		focusSessions
+	};
 }
 
 /** Parse raw file text into a validated backup. */
@@ -139,7 +220,10 @@ export function parseBackupText(text: string): BackupValidationResult {
 			activities: [],
 			steps: [],
 			settings: { ...DEFAULT_SETTINGS },
-			hasSteps: false
+			hasSteps: false,
+			habits: [],
+			habitLogs: [],
+			focusSessions: []
 		};
 	}
 	return validateBackup(parsed);
@@ -168,46 +252,88 @@ function downloadJson(json: string, filename: string): void {
 export interface ExportSummary {
 	activities: number;
 	steps: number;
+	habits: number;
+	habitLogs: number;
+	focusSessions: number;
 }
 
 /**
- * Export the current database (activities + steps + settings) to JSON.
+ * Export the current database (activities + steps + settings + habits +
+ * habit logs + focus sessions) to JSON.
  */
 export async function exportData(): Promise<ExportSummary> {
-	const [activities, steps, settings] = await Promise.all([
+	const [activities, steps, settings, habits, habitLogs, focusSessions] = await Promise.all([
 		getActivities(),
 		getStepRecords(),
-		getSettings()
+		getSettings(),
+		getHabits(),
+		getHabitLogs(),
+		getFocusSessions()
 	]);
-	const backup = createBackup(activities, steps, settings);
+	const backup = createBackup(activities, steps, settings, habits, habitLogs, focusSessions);
 	downloadJson(JSON.stringify(backup, null, 2), backupFileName());
-	return { activities: activities.length, steps: steps.length };
+	return {
+		activities: activities.length,
+		steps: steps.length,
+		habits: habits.length,
+		habitLogs: habitLogs.length,
+		focusSessions: focusSessions.length
+	};
 }
 
 export interface ImportResult {
 	mode: 'merge' | 'replace';
 	activities: number;
 	steps: number;
+	habits: number;
+	habitLogs: number;
+	focusSessions: number;
 }
 
 /**
  * Import validated backup data with the chosen strategy.
  * - "replace": wipe existing data, then insert everything from the backup.
- * - "merge": keep existing data, add missing activities and raise step totals.
+ * - "merge": keep existing data, add missing activities/habits/logs/sessions.
  */
 export async function importData(
-	backup: Pick<BackupValidationResult, 'activities' | 'steps' | 'settings'>,
+	backup: Pick<
+		BackupValidationResult,
+		'activities' | 'steps' | 'settings' | 'habits' | 'habitLogs' | 'focusSessions'
+	>,
 	mode: 'merge' | 'replace'
 ): Promise<ImportResult> {
+	const habits = backup.habits ?? [];
+	const habitLogs = backup.habitLogs ?? [];
+	const focusSessions = backup.focusSessions ?? [];
+
 	if (mode === 'replace') {
 		await replaceActivities(backup.activities);
 		await replaceStepRecords(backup.steps);
+		await replaceHabitsAndLogs(habits, habitLogs);
+		await replaceFocusSessions(focusSessions);
 		if (backup.settings) await putSettings(backup.settings);
-		return { mode, activities: backup.activities.length, steps: backup.steps.length };
+		return {
+			mode,
+			activities: backup.activities.length,
+			steps: backup.steps.length,
+			habits: habits.length,
+			habitLogs: habitLogs.length,
+			focusSessions: focusSessions.length
+		};
 	}
 
 	const addedActivities = await mergeActivities(backup.activities);
 	await mergeStepRecords(backup.steps);
+	const addedHabits = await mergeHabits(habits);
+	const addedLogs = await mergeHabitLogs(habitLogs);
+	await mergeFocusSessions(focusSessions);
 	if (backup.settings) await putSettings(backup.settings);
-	return { mode, activities: addedActivities, steps: backup.steps.length };
+	return {
+		mode,
+		activities: addedActivities,
+		steps: backup.steps.length,
+		habits: addedHabits,
+		habitLogs: addedLogs,
+		focusSessions: focusSessions.length
+	};
 }

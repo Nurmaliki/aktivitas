@@ -27,6 +27,12 @@ class HabitStore {
 		this.error = null;
 	}
 
+	/** Re-read all habits and logs from IndexedDB (used after import). */
+	async refresh(): Promise<void> {
+		this.loadPromise = null;
+		await this.init(true);
+	}
+
 	private setError(error: unknown, fallback: string): void {
 		this.error = error instanceof Error && error.message ? error.message : fallback;
 	}

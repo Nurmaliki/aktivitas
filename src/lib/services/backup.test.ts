@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Activity } from '$lib/types/activity';
 import type { StepRecord } from '$lib/types/steps';
+import type { Habit, HabitLog } from '$lib/types/habit';
+import type { FocusSession } from '$lib/types/focus';
 import { BACKUP_VERSION } from '$lib/types/activity';
 import {
 	backupFileName,
@@ -229,6 +231,170 @@ describe('validateBackup (v2)', () => {
 			version: 2,
 			activities: [],
 			settings: { stepGoal: 'big' }
+		});
+		expect(result.valid).toBe(false);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// v3: habits / habit logs / focus sessions (backward compatible with v1/v2)
+// ---------------------------------------------------------------------------
+
+function makeHabit(overrides: Partial<Habit> = {}): Habit {
+	return {
+		id: 'h1',
+		name: 'Minum air',
+		frequency: 'daily',
+		targetPerPeriod: 1,
+		active: true,
+		createdAt: '2024-03-05T08:00:00.000Z',
+		updatedAt: '2024-03-05T08:00:00.000Z',
+		...overrides
+	};
+}
+
+function makeHabitLog(overrides: Partial<HabitLog> = {}): HabitLog {
+	return {
+		id: 'l1',
+		habitId: 'h1',
+		date: '2024-03-05',
+		completed: true,
+		updatedAt: '2024-03-05T08:00:00.000Z',
+		...overrides
+	};
+}
+
+function makeFocusSession(overrides: Partial<FocusSession> = {}): FocusSession {
+	return {
+		id: 'f1',
+		type: 'pomodoro',
+		phase: 'focus',
+		startedAt: '2024-03-05T08:00:00.000Z',
+		plannedMinutes: 25,
+		status: 'completed',
+		totalPausedMs: 0,
+		createdAt: '2024-03-05T08:00:00.000Z',
+		updatedAt: '2024-03-05T08:00:00.000Z',
+		...overrides
+	};
+}
+
+describe('createBackup (v3)', () => {
+	it('includes habits, habit logs and focus sessions', () => {
+		const backup = createBackup(
+			[makeActivity()],
+			[makeStep()],
+			{ stepGoal: 12000 },
+			[makeHabit()],
+			[makeHabitLog()],
+			[makeFocusSession()]
+		);
+		expect(backup.version).toBe(BACKUP_VERSION);
+		expect(backup.habits).toHaveLength(1);
+		expect(backup.habitLogs).toHaveLength(1);
+		expect(backup.focusSessions).toHaveLength(1);
+	});
+
+	it('defaults the new sections to empty arrays', () => {
+		const backup = createBackup([makeActivity()]);
+		expect(backup.habits).toEqual([]);
+		expect(backup.habitLogs).toEqual([]);
+		expect(backup.focusSessions).toEqual([]);
+	});
+});
+
+describe('validateBackup (v1/v2 backward compatibility)', () => {
+	it('defaults the v3 sections to empty for a v1 file', () => {
+		const result = validateBackup({ version: 1, activities: [makeActivity()] });
+		expect(result.valid).toBe(true);
+		expect(result.habits).toEqual([]);
+		expect(result.habitLogs).toEqual([]);
+		expect(result.focusSessions).toEqual([]);
+	});
+
+	it('defaults the v3 sections to empty for a v2 file', () => {
+		const result = validateBackup({
+			version: 2,
+			activities: [makeActivity()],
+			steps: [makeStep()],
+			settings: { stepGoal: 9000 }
+		});
+		expect(result.valid).toBe(true);
+		expect(result.habits).toEqual([]);
+	});
+});
+
+describe('validateBackup (v3)', () => {
+	it('accepts a file with valid habits, logs and sessions', () => {
+		const result = validateBackup({
+			version: 3,
+			activities: [makeActivity()],
+			steps: [makeStep()],
+			settings: { stepGoal: 12000 },
+			habits: [makeHabit()],
+			habitLogs: [makeHabitLog()],
+			focusSessions: [makeFocusSession()]
+		});
+		expect(result.valid).toBe(true);
+		expect(result.habits).toHaveLength(1);
+		expect(result.habitLogs).toHaveLength(1);
+		expect(result.focusSessions).toHaveLength(1);
+	});
+
+	it('rejects a habits section that is not an array', () => {
+		expect(validateBackup({ version: 3, activities: [], habits: 'nope' }).valid).toBe(false);
+	});
+
+	it('rejects an invalid habit record', () => {
+		const result = validateBackup({
+			version: 3,
+			activities: [],
+			habits: [makeHabit(), { id: 'bad' }]
+		});
+		expect(result.valid).toBe(false);
+		expect(result.error).toMatch(/indeks 1/i);
+	});
+
+	it('rejects a habit with an invalid frequency', () => {
+		const result = validateBackup({
+			version: 3,
+			activities: [],
+			habits: [{ ...makeHabit(), frequency: 'hourly' }]
+		});
+		expect(result.valid).toBe(false);
+	});
+
+	it('rejects a habit log with a malformed date', () => {
+		const result = validateBackup({
+			version: 3,
+			activities: [],
+			habitLogs: [makeHabitLog({ date: '05/03/2024' })]
+		});
+		expect(result.valid).toBe(false);
+	});
+
+	it('rejects a habitLogs section that is not an array', () => {
+		expect(validateBackup({ version: 3, activities: [], habitLogs: 5 }).valid).toBe(false);
+	});
+
+	it('rejects a focus session with an unknown status', () => {
+		const result = validateBackup({
+			version: 3,
+			activities: [],
+			focusSessions: [{ ...makeFocusSession(), status: 'zombie' }]
+		});
+		expect(result.valid).toBe(false);
+	});
+
+	it('rejects a focusSessions section that is not an array', () => {
+		expect(validateBackup({ version: 3, activities: [], focusSessions: {} }).valid).toBe(false);
+	});
+
+	it('rejects a focus session with negative paused time', () => {
+		const result = validateBackup({
+			version: 3,
+			activities: [],
+			focusSessions: [{ ...makeFocusSession(), totalPausedMs: -1 }]
 		});
 		expect(result.valid).toBe(false);
 	});

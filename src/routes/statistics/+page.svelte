@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { activityStore } from '$lib/stores/activity.svelte.js';
 	import { stepStore } from '$lib/stores/steps.svelte.js';
+	import { habitStore } from '$lib/stores/habit.svelte.js';
+	import { focusStore } from '$lib/stores/focus.svelte.js';
 	import { getLocalDateString, formatHeaderDate } from '$lib/utils/date';
 	import { formatDuration, getMonthlyStats, getWeeklyStats } from '$lib/utils/statistics';
 	import { getMonthlyStepStats, computeStepStats } from '$lib/utils/stepStatistics';
@@ -61,7 +63,7 @@
 		busy = true;
 		try {
 			const summary = await exportData();
-			actionMessage = `Berhasil mengekspor ${summary.activities} aktivitas dan ${summary.steps} hari data langkah.`;
+			actionMessage = `Berhasil mengekspor ${summary.activities} aktivitas, ${summary.steps} hari data langkah, ${summary.habits} kebiasaan, ${summary.habitLogs} log kebiasaan, dan ${summary.focusSessions} sesi fokus.`;
 		} catch (error) {
 			actionError =
 				error instanceof Error ? error.message : 'Gagal mengekspor data.';
@@ -102,10 +104,12 @@
 			const result = await importData(pendingImport, mode);
 			await activityStore.refresh();
 			await stepStore.refresh();
+			await habitStore.refresh();
+			await focusStore.refresh();
 			actionMessage =
 				mode === 'replace'
-					? `Berhasil mengganti data dengan ${result.activities} aktivitas dan ${result.steps} hari data langkah dari "${pendingFileName}".`
-					: `Berhasil menggabungkan aktivitas dari "${pendingFileName}".`;
+					? `Berhasil mengganti data dengan ${result.activities} aktivitas, ${result.steps} hari data langkah, ${result.habits} kebiasaan, dan ${result.focusSessions} sesi fokus dari "${pendingFileName}".`
+					: `Berhasil menggabungkan data dari "${pendingFileName}" (${result.activities} aktivitas baru, ${result.habits} kebiasaan baru).`;
 			pendingImport = null;
 			pendingFileName = '';
 		} catch (error) {
@@ -439,7 +443,11 @@
 		<p class="mode-message">
 			Ditemukan <strong>{pendingImport?.activities.length ?? 0}</strong> aktivitas{pendingImport &&
 			pendingImport.hasSteps
-				? ` dan ${pendingImport.steps.length} hari data langkah`
+				? `, ${pendingImport.steps.length} hari data langkah`
+				: ''}{pendingImport && pendingImport.habits.length > 0
+				? `, ${pendingImport.habits.length} kebiasaan`
+				: ''}{pendingImport && pendingImport.focusSessions.length > 0
+				? `, ${pendingImport.focusSessions.length} sesi fokus`
 				: ''} pada <strong>"{pendingFileName}"</strong>. Pilih cara mengimpor data.
 		</p>
 		<ul class="mode-options">

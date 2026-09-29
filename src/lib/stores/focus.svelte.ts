@@ -90,6 +90,12 @@ class FocusStore {
 		this.error = null;
 	}
 
+	/** Re-read all focus sessions from IndexedDB (used after import). */
+	async refresh(): Promise<void> {
+		this.loadPromise = null;
+		await this.init(true);
+	}
+
 	/** Count of completed focus sessions (used to pick the next break length). */
 	focusCount(): number {
 		return this.sessions.filter((s) => s.phase === 'focus' && s.status === 'completed').length;
