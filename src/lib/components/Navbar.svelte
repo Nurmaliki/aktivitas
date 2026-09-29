@@ -3,6 +3,7 @@
 
 	const links = [
 		{ href: '/', label: 'Dashboard' },
+		{ href: '/planner', label: 'Planner' },
 		{ href: '/history', label: 'Riwayat' },
 		{ href: '/steps', label: 'Langkah' },
 		{ href: '/statistics', label: 'Statistik' }

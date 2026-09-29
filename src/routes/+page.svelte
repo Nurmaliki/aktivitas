@@ -76,6 +76,10 @@
 		void activityStore.toggle(id);
 	}
 
+	function handleSubtasksChange(id: string, subtasks: import('$lib/types/common').Subtask[]) {
+		void activityStore.updateSubtasks(id, subtasks);
+	}
+
 	function scrollToForm() {
 		formSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		formSection?.querySelector<HTMLInputElement>('input')?.focus();
@@ -178,6 +182,7 @@
 				onToggle={handleToggle}
 				onEdit={openEdit}
 				onDelete={requestDelete}
+				onSubtasksChange={handleSubtasksChange}
 			/>
 		</div>
 	</section>

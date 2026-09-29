@@ -11,7 +11,16 @@ import { HABIT_FREQUENCIES } from '$lib/types/habit';
 import type { FocusSession, FocusSessionStatus, FocusPhase } from '$lib/types/focus';
 import type { Priority, ReminderConfig, RecurrenceRule, Subtask } from '$lib/types/common';
 import { isValidDateString } from '$lib/utils/date';
-import { isValidTimeString } from '$lib/utils/validation';
+
+/** Local time string "HH:MM" (00:00–23:59). Local copy to avoid an import cycle. */
+function isValidTimeStringLocal(value: unknown): boolean {
+	if (typeof value !== 'string') return false;
+	const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+	if (!match) return false;
+	const hh = Number(match[1]);
+	const mm = Number(match[2]);
+	return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+}
 
 const PRIORITIES: Priority[] = ['low', 'medium', 'high'];
 const FOCUS_STATUSES: FocusSessionStatus[] = ['running', 'paused', 'completed', 'cancelled'];
@@ -59,7 +68,7 @@ export function isValidReminder(value: unknown): value is ReminderConfig {
 	if (typeof r.sound !== 'boolean') return false;
 	if (typeof r.vibration !== 'boolean') return false;
 	if (!isFiniteNumber(r.snoozeMinutes) || r.snoozeMinutes < 0) return false;
-	if (r.time != null && !isValidTimeString(r.time)) return false;
+	if (r.time != null && !isValidTimeStringLocal(r.time)) return false;
 	if (r.minutesBefore != null && !isFiniteNumber(r.minutesBefore)) return false;
 	if (r.repeat != null && !isValidRecurrence(r.repeat)) return false;
 	return true;

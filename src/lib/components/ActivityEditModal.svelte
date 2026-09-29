@@ -8,6 +8,8 @@
 		type ActivityInput
 	} from '$lib/types/activity';
 	import { validateActivityInput, normalizeInput } from '$lib/utils/validation';
+	import type { Subtask } from '$lib/types/common';
+	import SubtaskList from '$lib/components/SubtaskList.svelte';
 
 	interface Props {
 		activity: Activity | null;
@@ -27,6 +29,7 @@
 	let date = $state('');
 	let duration = $state(30);
 	let completed = $state(false);
+	let subtasks = $state<Subtask[]>([]);
 	let errors = $state<Record<string, string>>({});
 
 	// Re-seed the form whenever the modal opens with a (new) activity.
@@ -38,6 +41,7 @@
 			date = activity.date;
 			duration = activity.duration;
 			completed = activity.completed;
+			subtasks = activity.subtasks ? [...activity.subtasks] : [];
 			errors = {};
 		}
 	});
@@ -62,7 +66,7 @@
 		}
 		errors = {};
 
-		const input = normalizeInput({ ...raw, completed });
+		const input = normalizeInput({ ...raw, completed, subtasks });
 		const ok = await onSave(activity.id, input);
 		if (ok) onClose();
 	}
@@ -159,6 +163,14 @@
 				</div>
 			</div>
 
+			<div class="modal-subtasks">
+				<SubtaskList
+					subtasks={subtasks}
+					disabled={saving}
+					onChange={(next) => (subtasks = next)}
+				/>
+			</div>
+
 			<footer class="modal-actions">
 				<button type="button" class="btn btn-secondary" onclick={onClose} disabled={saving}>
 					Batal
@@ -217,5 +229,10 @@
 		font-size: 0.85rem;
 		font-weight: 600;
 		min-height: 1.25rem;
+	}
+
+	.modal-subtasks {
+		border-top: 1px solid var(--color-border);
+		padding-top: var(--space-4);
 	}
 </style>

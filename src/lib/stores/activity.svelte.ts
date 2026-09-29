@@ -119,8 +119,7 @@ class ActivityStore {
 	}
 
 	/** Flip the completed flag of an activity. */
-	async toggle(id: string): Promise<void> {
-		const current = this.activities.find((activity) => activity.id === id);
+	async toggle(id: string): Promise<void> {		const current = this.activities.find((activity) => activity.id === id);
 		if (!current) return;
 		this.saving = true;
 		this.error = null;
@@ -136,9 +135,26 @@ class ActivityStore {
 		}
 	}
 
-	/** Delete an activity by id. */
-	async remove(id: string): Promise<void> {
+	/** Replace the checklist of an activity (used by the inline list UI). */
+	async updateSubtasks(id: string, subtasks: import('$lib/types/common').Subtask[]): Promise<void> {
 		this.saving = true;
+		this.error = null;
+		try {
+			const updated = await db.updateActivity(id, {
+				subtasks: $state.snapshot(subtasks)
+			} as Partial<ActivityInput>);
+			this.activities = this.sort(
+				this.activities.map((activity) => (activity.id === id ? updated : activity))
+			);
+		} catch (error) {
+			this.setError(error, 'Gagal memperbarui checklist.');
+		} finally {
+			this.saving = false;
+		}
+	}
+
+	/** Delete an activity by id. */
+	async remove(id: string): Promise<void> {		this.saving = true;
 		this.error = null;
 		try {
 			await db.deleteActivity(id);

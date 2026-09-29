@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { Activity } from '$lib/types/activity';
+	import type { Subtask } from '$lib/types/common';
 	import { formatDuration } from '$lib/utils/statistics';
+	import { subtaskProgress } from '$lib/utils/subtasks';
+	import SubtaskList from '$lib/components/SubtaskList.svelte';
 
 	interface Props {
 		activity: Activity;
@@ -9,13 +12,19 @@
 		onToggle: (id: string) => void;
 		onEdit: (activity: Activity) => void;
 		onDelete: (activity: Activity) => void;
+		/** Optional: persist checklist changes made inline. */
+		onSubtasksChange?: (id: string, subtasks: Subtask[]) => void;
 	}
 
-	let { activity, busy = false, showDate = false, onToggle, onEdit, onDelete }: Props = $props();
+	let { activity, busy = false, showDate = false, onToggle, onEdit, onDelete, onSubtasksChange }: Props =
+		$props();
 
 	const categoryClass = $derived(
 		'badge category-' + activity.category.toLowerCase().replace(/[^a-z]/g, '')
 	);
+
+	const progress = $derived(subtaskProgress(activity.subtasks));
+	let subtasksOpen = $state(false);
 </script>
 
 <li class="activity-item" class:completed={activity.completed}>
@@ -49,7 +58,28 @@
 			{#if showDate}
 				<span class="meta-date">{activity.date}</span>
 			{/if}
+			{#if progress.total > 0}
+				<button
+					type="button"
+					class="meta-checklist"
+					aria-expanded={subtasksOpen}
+					onclick={() => (subtasksOpen = !subtasksOpen)}
+				>
+					Checklist {progress.completed}/{progress.total}
+					<span aria-hidden="true">{subtasksOpen ? '▾' : '▸'}</span>
+				</button>
+			{/if}
 		</div>
+		{#if subtasksOpen && progress.total > 0}
+			<div class="activity-subtasks">
+				<SubtaskList
+					subtasks={activity.subtasks}
+					disabled={busy || !onSubtasksChange}
+					compact
+					onChange={(next) => onSubtasksChange?.(activity.id, next)}
+				/>
+			</div>
+		{/if}
 	</div>
 
 	<div class="activity-actions">
@@ -142,6 +172,29 @@
 	.meta-duration {
 		font-weight: 600;
 		color: var(--color-text-muted);
+	}
+
+	.meta-checklist {
+		background: none;
+		border: none;
+		padding: 0;
+		font: inherit;
+		color: var(--color-primary);
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.meta-checklist:hover {
+		text-decoration: underline;
+	}
+
+	.activity-subtasks {
+		margin-top: var(--space-2);
+		padding: var(--space-2) var(--space-3);
+		background-color: var(--color-surface-alt, rgba(0, 0, 0, 0.03));
+		border-radius: var(--radius-md);
 	}
 
 	.activity-item.completed .meta-status {

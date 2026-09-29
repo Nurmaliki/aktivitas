@@ -13,6 +13,7 @@
 		onToggle: (id: string) => void;
 		onEdit: (activity: Activity) => void;
 		onDelete: (activity: Activity) => void;
+		onSubtasksChange?: (id: string, subtasks: import('$lib/types/common').Subtask[]) => void;
 	}
 
 	let {
@@ -25,7 +26,8 @@
 		onEmptyAction,
 		onToggle,
 		onEdit,
-		onDelete
+		onDelete,
+		onSubtasksChange
 	}: Props = $props();
 </script>
 
@@ -52,6 +54,7 @@
 				{onToggle}
 				{onEdit}
 				{onDelete}
+				{onSubtasksChange}
 			/>
 		{/each}
 	</ul>

@@ -9,6 +9,12 @@ import {
 	type ValidationResult
 } from '$lib/types/activity';
 import { isValidDateString } from '$lib/utils/date';
+import { normalizeSubtasks } from '$lib/utils/migration';
+import {
+	isValidPriority,
+	isValidRecurrence,
+	isValidReminder
+} from '$lib/utils/validators';
 
 /** Validate a local time string in "HH:MM" (00:00–23:59). */
 export function isValidTimeString(value: unknown): boolean {
@@ -134,8 +140,16 @@ export function normalizeInput(input: {
 	date: unknown;
 	duration: unknown;
 	completed: unknown;
+	startTime?: unknown;
+	endTime?: unknown;
+	priority?: unknown;
+	status?: unknown;
+	subtasks?: unknown;
+	reminder?: unknown;
+	recurrence?: unknown;
+	habitId?: unknown;
 }): ActivityInput {
-	return {
+	const result: ActivityInput = {
 		name: sanitizeText(input.name, MAX_NAME_LENGTH),
 		description:
 			typeof input.description === 'string' && input.description.trim().length > 0
@@ -146,4 +160,30 @@ export function normalizeInput(input: {
 		duration: typeof input.duration === 'number' ? input.duration : Number(input.duration),
 		completed: input.completed === true
 	};
+
+	// Optional v3 fields are normalized with the same defensive helpers used on
+	// read so the stored shape stays consistent.
+	if (typeof input.startTime === 'string' && isValidTimeString(input.startTime)) {
+		result.startTime = input.startTime;
+	}
+	if (typeof input.endTime === 'string' && isValidTimeString(input.endTime)) {
+		result.endTime = input.endTime;
+	}
+	if (isValidPriority(input.priority)) {
+		result.priority = input.priority;
+	}
+	if (Array.isArray(input.subtasks)) {
+		const normalized = normalizeSubtasks(input.subtasks);
+		if (normalized.length > 0) result.subtasks = normalized;
+	}
+	if (isValidReminder(input.reminder)) {
+		result.reminder = input.reminder;
+	}
+	if (isValidRecurrence(input.recurrence)) {
+		result.recurrence = input.recurrence;
+	}
+	if (typeof input.habitId === 'string' && input.habitId) {
+		result.habitId = input.habitId;
+	}
+	return result;
 }
