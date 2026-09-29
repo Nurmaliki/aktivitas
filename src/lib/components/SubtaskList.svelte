@@ -202,7 +202,7 @@
 	.subtask-bar {
 		height: 8px;
 		background-color: var(--color-surface-alt);
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 		overflow: hidden;
 		box-shadow: var(--shadow-clay-inset);
 	}

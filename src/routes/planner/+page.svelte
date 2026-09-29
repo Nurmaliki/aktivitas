@@ -430,7 +430,7 @@
 		color: var(--color-primary);
 		font-size: 0.72rem;
 		padding: 2px 8px;
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 	}
 
 	.planner-actions {
@@ -541,7 +541,7 @@
 		color: var(--color-text-muted);
 		font-size: 0.72rem;
 		padding: 2px 8px;
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 	}
 
 	.unscheduled-list,

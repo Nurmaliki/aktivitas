@@ -302,7 +302,7 @@
 		max-width: 24rem;
 		height: 8px;
 		background-color: rgba(255, 255, 255, 0.2);
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 		overflow: hidden;
 	}
 

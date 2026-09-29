@@ -365,7 +365,7 @@
 		display: inline-block;
 		width: 10px;
 		height: 10px;
-		border-radius: 3px;
+		border-radius: var(--radius-lg);
 		margin-right: 4px;
 	}
 
@@ -397,7 +397,7 @@
 	.category-bar {
 		height: 0.6rem;
 		background-color: var(--color-surface-alt);
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 		overflow: hidden;
 		box-shadow: var(--shadow-clay-inset);
 	}
@@ -407,7 +407,7 @@
 		height: 100%;
 		background-color: var(--color-primary);
 		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 	}
 
 	.category-val {

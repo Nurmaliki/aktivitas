@@ -28,11 +28,13 @@
 	--color-danger-soft: #fde1e8;
 	--color-danger-hover: #e75b7e;
 
-	/* Radii — generous, rounded clay corners */
-	--radius-sm: 12px;
-	--radius-md: 18px;
+	/* Radii — seragam memakai radius-lg (26px) untuk semua sudut komponen.
+	   --radius-full tetap 999px untuk elemen yang wajib bulat/pill
+	   (tombol, badge, progress bar, avatar, dot). */
 	--radius-lg: 26px;
-	--radius-xl: 34px;
+	--radius-sm: var(--radius-lg);
+	--radius-md: var(--radius-lg);
+	--radius-xl: var(--radius-lg);
 	--radius-full: 999px;
 
 	/* -----------------------------------------------------------------------

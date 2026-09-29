@@ -72,7 +72,7 @@
 	.heat-cell {
 		width: 13px;
 		height: 13px;
-		border-radius: 4px;
+		border-radius: var(--radius-lg);
 		background-color: var(--color-surface-alt);
 		flex-shrink: 0;
 	}

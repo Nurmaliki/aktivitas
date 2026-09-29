@@ -67,7 +67,7 @@
 	.state-badge {
 		font-size: 0.8rem;
 		padding: 0.2rem 0.7rem;
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 		background-color: var(--color-primary-soft);
 		color: var(--color-primary);
 		font-weight: 700;

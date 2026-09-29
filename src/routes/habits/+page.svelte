@@ -328,7 +328,7 @@
 		color: var(--color-text-muted);
 		font-size: 0.7rem;
 		padding: 2px 8px;
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 	}
 
 	.week-table {
