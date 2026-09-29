@@ -5,6 +5,7 @@
 		{ href: '/', label: 'Dashboard' },
 		{ href: '/planner', label: 'Planner' },
 		{ href: '/calendar', label: 'Kalender' },
+		{ href: '/focus', label: 'Fokus' },
 		{ href: '/history', label: 'Riwayat' },
 		{ href: '/steps', label: 'Langkah' },
 		{ href: '/statistics', label: 'Statistik' }
