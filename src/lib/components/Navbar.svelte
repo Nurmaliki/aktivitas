@@ -273,7 +273,7 @@
 	.nav-link {
 		display: inline-block;
 		padding: 0.45rem 0.85rem;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-lg);
 		text-decoration: none;
 		color: var(--color-text-muted);
 		font-size: 0.9rem;

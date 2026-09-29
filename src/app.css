@@ -218,6 +218,7 @@ a.btn:hover {
 	background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 	color: var(--color-primary-contrast);
 	box-shadow: var(--shadow-clay-sm);
+	border-radius: var(--radius-lg);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -263,7 +264,7 @@ a.btn:hover {
 .btn-sm {
 	padding: 0.4rem 0.85rem;
 	font-size: 0.8rem;
-	border-radius: var(--radius-full);
+	border-radius: inherit;
 }
 
 /* ---------- Cards ---------- */
@@ -519,7 +520,7 @@ table.sr-only td {
 	.btn-sm {
 		padding: 0.5rem 0.85rem;
 		font-size: 0.82rem;
-		border-radius: var(--radius-full);
+		border-radius: inherit;
 	}
 }
 
