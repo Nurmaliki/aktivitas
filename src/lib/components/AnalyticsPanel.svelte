@@ -7,6 +7,8 @@
 	import { stepStore } from '$lib/stores/steps.svelte.js';
 	import { focusStore } from '$lib/stores/focus.svelte.js';
 	import { habitStore } from '$lib/stores/habit.svelte.js';
+	import EmptyIcon from '$lib/components/EmptyIcon.svelte';
+	import InlineIcon from '$lib/components/InlineIcon.svelte';
 
 	interface Props {
 		/** Injected "today" so SSR and client agree (falls back to runtime). */
@@ -87,7 +89,7 @@
 
 	{#if k.totalActivities === 0 && k.pomodoroSessions === 0 && k.totalSteps === 0}
 		<div class="empty-state">
-			<div class="empty-icon" aria-hidden="true">📊</div>
+			<EmptyIcon name="chart" size={26} />
 			<p class="empty-title">Belum ada data pada rentang ini.</p>
 			<p class="empty-message">Coba pilih rentang lain atau tambahkan aktivitas.</p>
 		</div>
@@ -103,7 +105,7 @@
 			<div class="kpi"><span class="kpi-value">{formatDuration(k.focusedDuration)}</span><span class="kpi-label">Waktu fokus</span></div>
 			<div class="kpi"><span class="kpi-value">{k.pomodoroSessions}</span><span class="kpi-label">Sesi pomodoro</span></div>
 			<div class="kpi"><span class="kpi-value">{k.habitCompletionRate}%</span><span class="kpi-label">Konsistensi kebiasaan</span></div>
-			<div class="kpi"><span class="kpi-value">🔥 {k.currentStreak}</span><span class="kpi-label">Streak saat ini</span></div>
+			<div class="kpi"><span class="kpi-value"><InlineIcon name="flame" /> {k.currentStreak}</span><span class="kpi-label">Streak saat ini</span></div>
 			<div class="kpi"><span class="kpi-value">{k.averageFocusSession} mnt</span><span class="kpi-label">Rata-rata fokus</span></div>
 			<div class="kpi"><span class="kpi-value">{k.averageStepsPerDay.toLocaleString('id-ID')}</span><span class="kpi-label">Rata-rata langkah/hari</span></div>
 		</div>
@@ -430,10 +432,6 @@
 		gap: var(--space-2);
 		padding: var(--space-6) var(--space-4);
 		text-align: center;
-	}
-
-	.empty-icon {
-		font-size: 2rem;
 	}
 
 	.empty-title {

@@ -15,6 +15,7 @@
 	import AnalyticsPanel from '$lib/components/AnalyticsPanel.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import SyncStatus from '$lib/components/SyncStatus.svelte';
+	import EmptyIcon from '$lib/components/EmptyIcon.svelte';
 
 	let today = $state('');
 	onMount(() => {
@@ -156,7 +157,7 @@
 	{:else if activityStore.activities.length === 0}
 		<section class="card">
 			<div class="empty-state">
-				<div class="empty-icon" aria-hidden="true">📊</div>
+				<EmptyIcon name="chart" />
 				<p class="empty-title">Belum cukup data untuk menampilkan statistik.</p>
 				<p class="empty-message">
 					Tambahkan aktivitas terlebih dahulu untuk melihat analisis produktivitas Anda.
@@ -307,7 +308,7 @@
 
 		{#if stepStore.records.length === 0}
 			<div class="empty-state">
-				<div class="empty-icon" aria-hidden="true">👟</div>
+				<EmptyIcon name="steps" />
 				<p class="empty-title">Belum ada data langkah.</p>
 				<p class="empty-message">
 					Catat langkah dari dashboard (input manual, sensor, atau impor file) untuk melihat
@@ -698,11 +699,7 @@
 		align-items: center;
 		text-align: center;
 		gap: var(--space-3);
-		padding: var(--space-8) var(--space-4);
-	}
-
-	.empty-icon {
-		font-size: 2rem;
+		padding: var(--space-6) var(--space-4);
 	}
 
 	.empty-title {

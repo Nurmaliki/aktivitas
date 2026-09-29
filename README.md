@@ -150,8 +150,9 @@ src/
 │   │   ├── StatCard / ProgressBar.svelte            # Kartu & progress bar
 │   │   ├── WeeklyChart / MonthlyChart.svelte        # Grafik aktivitas
 │   │   ├── StepsChart / WeeklyStepsChart.svelte     # Grafik langkah
-│   │   ├── StepCounterCard.svelte                   # Kartu langkah (dashboard)
+│   │   ├── StepCounterCard.svelte                   # Kartu langkah (dashboard: mode ringkas)
 │   │   ├── MissedActivitiesPanel.svelte             # Panel aktivitas terlewat
+│   │   ├── EmptyIcon / StepIcon / InlineIcon.svelte # Ikon SVG inline (empty-state & inline)
 │   │   ├── AlarmScreen.svelte                       # Layar alarm/pengingat
 │   │   ├── ReminderSettings.svelte                  # Pengaturan pengingat
 │   │   ├── HabitForm / HabitHeatmap.svelte          # Kebiasaan

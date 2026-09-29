@@ -2,10 +2,8 @@
 	import { onMount } from 'svelte';
 	import type { Activity, ActivityInput } from '$lib/types/activity';
 	import { activityStore } from '$lib/stores/activity.svelte.js';
-	import { stepStore } from '$lib/stores/steps.svelte.js';
 	import { getLocalDateString, formatHeaderDate } from '$lib/utils/date';
 	import { computeStats, formatDuration, getWeeklyStats } from '$lib/utils/statistics';
-	import { goalProgress } from '$lib/utils/stepStatistics';
 	import ActivityForm from '$lib/components/ActivityForm.svelte';
 	import ActivityList from '$lib/components/ActivityList.svelte';
 	import ActivityEditModal from '$lib/components/ActivityEditModal.svelte';
@@ -28,10 +26,6 @@
 	const todayStats = $derived(computeStats(todaysActivities));
 	const weeklyStats = $derived(getWeeklyStats(activityStore.activities, 7, today || undefined));
 	const allStats = $derived(computeStats(activityStore.activities));
-
-	// Steps today (0 until the store has loaded on the client).
-	const todaySteps = $derived(today ? stepStore.stepsFor(today) : 0);
-	const stepsProgress = $derived(goalProgress(todaySteps, stepStore.goal));
 
 	// Edit modal state
 	let editing = $state<Activity | null>(null);
@@ -143,12 +137,6 @@
 				value={formatDuration(todayStats.totalDuration)}
 				hint="{formatDuration(todayStats.completedDuration)} selesai"
 			/>
-			<StatCard
-				label="Langkah Hari Ini"
-				value={todaySteps.toLocaleString('id-ID')}
-				hint="{stepsProgress}% dari target {stepStore.goal.toLocaleString('id-ID')}"
-				accent="primary"
-			/>
 		</div>
 		<div class="progress-card">
 			<ProgressBar value={todayStats.completionRate} label="Progress hari ini" />
@@ -157,7 +145,7 @@
 
 	<MissedActivitiesPanel />
 
-	<StepCounterCard />
+	<StepCounterCard compact />
 
 	<section class="card" aria-labelledby="today-title">
 		<div class="spread">
@@ -261,9 +249,12 @@
 		}
 	}
 
+	/* Keep a 2-column grid on phones too — a single column wastes far too much
+	   vertical space (5 tall cards). Two columns stay readable at 320px+. */
 	@media (max-width: 560px) {
 		.stat-grid {
-			grid-template-columns: 1fr;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: var(--space-3);
 		}
 	}
 </style>

@@ -7,6 +7,8 @@
 	import HabitForm from '$lib/components/HabitForm.svelte';
 	import HabitHeatmap from '$lib/components/HabitHeatmap.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import EmptyIcon from '$lib/components/EmptyIcon.svelte';
+	import InlineIcon from '$lib/components/InlineIcon.svelte';
 
 	let today = $state('');
 	onMount(() => {
@@ -105,7 +107,7 @@
 
 		{#if todayScheduled.length === 0}
 			<div class="empty-state">
-				<div class="empty-icon" aria-hidden="true">🌱</div>
+				<EmptyIcon name="habit" />
 				<p class="empty-title">Belum ada kebiasaan untuk hari ini.</p>
 				<p class="empty-message">Tambahkan kebiasaan di bawah untuk mulai melacak.</p>
 			</div>
@@ -130,7 +132,7 @@
 								{#if habit.categoryId}<span class="badge category-badge">{habit.categoryId}</span>{/if}
 							</div>
 							<div class="habit-meta">
-								<span class="streak">🔥 {streak.current} hari</span>
+								<span class="streak"><InlineIcon name="flame" /> {streak.current} hari</span>
 								<span class="muted">Terpanjang: {streak.longest}</span>
 								<span class="muted">{streak.completionRate}% (30 hari)</span>
 							</div>
@@ -194,7 +196,7 @@
 										{/if}
 									</td>
 								{/each}
-								<td>🔥 {habitStore.streakFor(habit).current}</td>
+								<td><InlineIcon name="flame" /> {habitStore.streakFor(habit).current}</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -236,10 +238,6 @@
 		gap: var(--space-2);
 		padding: var(--space-6) var(--space-4);
 		text-align: center;
-	}
-
-	.empty-icon {
-		font-size: 2rem;
 	}
 
 	.empty-title {

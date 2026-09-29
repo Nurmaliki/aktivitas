@@ -5,6 +5,17 @@
 	import { goalProgress, estimateDistanceKm, estimateCalories } from '$lib/utils/stepStatistics';
 	import { MotionSensor, isMotionSupported, type SensorStatus } from '$lib/services/motionSensor';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
+	import StepIcon from '$lib/components/StepIcon.svelte';
+
+	interface Props {
+		/**
+		 * Compact mode shows only the summary + link to the Steps page (used on
+		 * the dashboard so manual input/sensor controls live in one place only).
+		 */
+		compact?: boolean;
+	}
+
+	let { compact = false }: Props = $props();
 
 	let today = $state(getLocalDateString());
 	let manualInput = $state('');
@@ -145,25 +156,35 @@
 
 <section class="card step-card" aria-labelledby="step-counter-title">
 	<div class="spread">
-		<div>
-			<h2 id="step-counter-title" class="card-title">Penghitung Langkah</h2>
-			<p class="card-subtitle">
-				{stepStore.goal.toLocaleString('id-ID')} langkah/hari · sumber: sensor, manual, atau impor
-			</p>
+		<div class="step-head">
+			<span class="step-icon" aria-hidden="true"><StepIcon /></span>
+			<div>
+				<h2 id="step-counter-title" class="card-title">Langkah Hari Ini</h2>
+				<p class="card-subtitle">
+					Target {stepStore.goal.toLocaleString('id-ID')} langkah/hari
+					{#if !compact}· sumber: sensor, manual, atau impor{/if}
+				</p>
+			</div>
 		</div>
-		<button
-			type="button"
-			class="btn btn-ghost btn-sm"
-			onclick={() => (showSettings = !showSettings)}
-			aria-expanded={showSettings}
-		>
-			{showSettings ? 'Tutup pengaturan' : 'Atur target'}
-		</button>
+		{#if !compact}
+			<button
+				type="button"
+				class="btn btn-ghost btn-sm"
+				onclick={() => (showSettings = !showSettings)}
+				aria-expanded={showSettings}
+			>
+				{showSettings ? 'Tutup pengaturan' : 'Atur target'}
+			</button>
+		{:else}
+			<a class="text-link" href="/steps">Buka halaman Langkah →</a>
+		{/if}
 	</div>
 
-	<p class="card-link-row">
-		<a class="text-link" href="/steps">Buka halaman Langkah →</a>
-	</p>
+	{#if !compact}
+		<p class="card-link-row">
+			<a class="text-link" href="/steps">Buka halaman Langkah →</a>
+		</p>
+	{/if}
 
 	<div class="step-summary">
 		<div class="step-big">
@@ -173,94 +194,115 @@
 		<div class="step-facts">
 			<span>{estimateDistanceKm(todaySteps)} km</span>
 			<span>≈ {estimateCalories(todaySteps)} kkal</span>
-			<span>{remaining > 0 ? `${remaining.toLocaleString('id-ID')} lagi ke target` : 'Target tercapai 🎉'}</span>
+			<span>{remaining > 0 ? `${remaining.toLocaleString('id-ID')} lagi ke target` : 'Target tercapai'}</span>
 		</div>
 	</div>
 
 	<ProgressBar value={progress} label="Progress target harian" />
 
-	{#if showSettings}
-		<div class="step-settings">
-			<div class="field">
-				<label for="step-goal">Target langkah harian</label>
+	{#if !compact}
+		{#if showSettings}
+			<div class="step-settings">
+				<div class="field">
+					<label for="step-goal">Target langkah harian</label>
+					<div class="inline-control">
+						<input
+							id="step-goal"
+							type="number"
+							min="1000"
+							max="100000"
+							step="500"
+							inputmode="numeric"
+							bind:value={goalInput}
+						/>
+						<button type="button" class="btn btn-secondary" onclick={saveGoal} disabled={stepStore.saving}>
+							Simpan target
+						</button>
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<div class="step-controls">
+			<div class="field grow">
+				<label for="step-manual">Input manual (jumlah langkah)</label>
 				<div class="inline-control">
 					<input
-						id="step-goal"
+						id="step-manual"
 						type="number"
-						min="1000"
-						max="100000"
-						step="500"
+						min="0"
+						step="1"
 						inputmode="numeric"
-						bind:value={goalInput}
+						placeholder="misal 3500"
+						bind:value={manualInput}
 					/>
-					<button type="button" class="btn btn-secondary" onclick={saveGoal} disabled={stepStore.saving}>
-						Simpan target
+					<button type="button" class="btn btn-primary" onclick={addManual} disabled={stepStore.saving}>
+						+ Tambah
+					</button>
+					<button type="button" class="btn btn-secondary" onclick={saveManual} disabled={stepStore.saving}>
+						Set total
 					</button>
 				</div>
 			</div>
-		</div>
-	{/if}
 
-	<div class="step-controls">
-		<div class="field grow">
-			<label for="step-manual">Input manual (jumlah langkah)</label>
-			<div class="inline-control">
-				<input
-					id="step-manual"
-					type="number"
-					min="0"
-					step="1"
-					inputmode="numeric"
-					placeholder="misal 3500"
-					bind:value={manualInput}
-				/>
-				<button type="button" class="btn btn-primary" onclick={addManual} disabled={stepStore.saving}>
-					+ Tambah
+			<div class="sensor-block">
+				<button
+					type="button"
+					class="btn {sensorStatus === 'active' ? 'btn-danger' : 'btn-secondary'}"
+					onclick={toggleSensor}
+					disabled={sensorDisabled}
+					aria-pressed={sensorStatus === 'active'}
+				>
+					{sensorLabel}
 				</button>
-				<button type="button" class="btn btn-secondary" onclick={saveManual} disabled={stepStore.saving}>
-					Set total
-				</button>
+				{#if sensorStatus === 'active'}
+					<p class="sensor-status" role="status">
+						Sesi aktif: <strong>{sessionAdded.toLocaleString('id-ID')}</strong> langkah terdeteksi
+					</p>
+				{:else if sensorMessage}
+					<p class="sensor-message muted">{sensorMessage}</p>
+				{:else if sensorStatus === 'unsupported'}
+					<p class="sensor-message muted">
+						Perangkat/tab ini tidak menyediakan sensor gerakan. Gunakan input manual.
+					</p>
+				{/if}
 			</div>
 		</div>
 
-		<div class="sensor-block">
-			<button
-				type="button"
-				class="btn {sensorStatus === 'active' ? 'btn-danger' : 'btn-secondary'}"
-				onclick={toggleSensor}
-				disabled={sensorDisabled}
-				aria-pressed={sensorStatus === 'active'}
-			>
-				{sensorLabel}
-			</button>
-			{#if sensorStatus === 'active'}
-				<p class="sensor-status" role="status">
-					Sesi aktif: <strong>{sessionAdded.toLocaleString('id-ID')}</strong> langkah terdeteksi
-				</p>
-			{:else if sensorMessage}
-				<p class="sensor-message muted">{sensorMessage}</p>
-			{:else if sensorStatus === 'unsupported'}
-				<p class="sensor-message muted">
-					Perangkat/tab ini tidak menyediakan sensor gerakan. Gunakan input manual.
-				</p>
-			{/if}
-		</div>
-	</div>
+		{#if feedback}
+			<p class="alert alert-success" role="status">{feedback}</p>
+		{/if}
+		{#if feedbackError}
+			<p class="alert alert-error" role="alert">{feedbackError}</p>
+		{/if}
 
-	{#if feedback}
-		<p class="alert alert-success" role="status">{feedback}</p>
+		<p class="step-disclaimer muted text-sm">
+			Perhitungan sensor berbasis akselerometer bersifat perkiraan dan hanya berjalan saat halaman
+			ini terbuka. Untuk data akurat, gunakan input manual atau impor dari aplikasi kesehatan Anda.
+		</p>
 	{/if}
-	{#if feedbackError}
-		<p class="alert alert-error" role="alert">{feedbackError}</p>
-	{/if}
-
-	<p class="step-disclaimer muted text-sm">
-		Perhitungan sensor berbasis akselerometer bersifat perkiraan dan hanya berjalan saat halaman
-		ini terbuka. Untuk data akurat, gunakan input manual atau impor dari aplikasi kesehatan Anda.
-	</p>
 </section>
 
 <style>
+	.step-head {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+	}
+
+	.step-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.75rem;
+		height: 2.75rem;
+		flex-shrink: 0;
+		border-radius: var(--radius-lg);
+		background-color: var(--color-primary-soft);
+		color: var(--color-primary);
+		box-shadow: var(--shadow-clay-sm);
+	}
+
 	.step-summary {
 		display: flex;
 		align-items: baseline;

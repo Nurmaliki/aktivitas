@@ -58,4 +58,22 @@
 	.accent-success .stat-value {
 		color: var(--color-success);
 	}
+
+	/* On phones the cards sit in a 2-column grid, so trim padding and the big
+	   min-height that only makes sense in a wide single row. */
+	@media (max-width: 560px) {
+		.stat-card {
+			padding: var(--space-3) var(--space-4);
+			min-height: 5.75rem;
+			gap: 0.15rem;
+		}
+
+		.stat-value {
+			font-size: 1.55rem;
+		}
+
+		.stat-label {
+			font-size: 0.7rem;
+		}
+	}
 </style>

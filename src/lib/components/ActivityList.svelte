@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Activity } from '$lib/types/activity';
 	import ActivityItem from '$lib/components/ActivityItem.svelte';
+	import EmptyIcon from '$lib/components/EmptyIcon.svelte';
 
 	interface Props {
 		activities: Activity[];
@@ -33,7 +34,7 @@
 
 {#if activities.length === 0}
 	<div class="empty-state">
-		<div class="empty-icon" aria-hidden="true">📝</div>
+		<EmptyIcon name="activity" />
 		<p class="empty-title">{emptyTitle}</p>
 		{#if emptyMessage}
 			<p class="empty-message">{emptyMessage}</p>
@@ -73,12 +74,7 @@
 		align-items: center;
 		text-align: center;
 		gap: var(--space-3);
-		padding: var(--space-8) var(--space-4);
-	}
-
-	.empty-icon {
-		font-size: 2rem;
-		line-height: 1;
+		padding: var(--space-6) var(--space-4);
 	}
 
 	.empty-title {

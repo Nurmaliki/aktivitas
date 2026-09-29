@@ -6,6 +6,7 @@
 	import { activityStore } from '$lib/stores/activity.svelte.js';
 	import { getLocalDateString, localDateFromISO } from '$lib/utils/date';
 	import { computeTimer, formatClock, phaseLabel, phaseMinutes } from '$lib/utils/focus';
+	import InlineIcon from '$lib/components/InlineIcon.svelte';
 
 	let today = $state('');
 	onMount(() => {
@@ -135,12 +136,18 @@
 
 		<div class="stat-grid">
 			<div class="mini-stat">
-				<span class="mini-value">{completedToday}</span>
-				<span class="mini-label">Sesi fokus hari ini</span>
+				<span class="mini-icon" aria-hidden="true"><InlineIcon name="target" size={22} /></span>
+				<div class="mini-body">
+					<span class="mini-value">{completedToday}</span>
+					<span class="mini-label">Sesi fokus hari ini</span>
+				</div>
 			</div>
 			<div class="mini-stat">
-				<span class="mini-value">{todayMinutes} mnt</span>
-				<span class="mini-label">Total waktu fokus hari ini</span>
+				<span class="mini-icon" aria-hidden="true"><InlineIcon name="check" size={22} /></span>
+				<div class="mini-body">
+					<span class="mini-value">{todayMinutes} mnt</span>
+					<span class="mini-label">Total waktu fokus hari ini</span>
+				</div>
 			</div>
 		</div>
 
@@ -335,17 +342,39 @@
 
 	.mini-stat {
 		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		background-color: var(--color-surface);
+		border: none;
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-clay);
+		padding: var(--space-4) var(--space-5);
+	}
+
+	.mini-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.75rem;
+		height: 2.75rem;
+		flex-shrink: 0;
+		border-radius: var(--radius-lg);
+		background-color: var(--color-primary-soft);
+		color: var(--color-primary);
+		box-shadow: var(--shadow-clay-sm);
+	}
+
+	.mini-body {
+		display: flex;
 		flex-direction: column;
 		gap: 2px;
-		background-color: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		padding: var(--space-4);
+		min-width: 0;
 	}
 
 	.mini-value {
 		font-size: 1.5rem;
 		font-weight: 800;
+		line-height: 1.1;
 	}
 
 	.mini-label {

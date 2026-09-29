@@ -26,6 +26,7 @@
 	import StepsChart from '$lib/components/StepsChart.svelte';
 	import WeeklyStepsChart from '$lib/components/WeeklyStepsChart.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import InlineIcon from '$lib/components/InlineIcon.svelte';
 
 	let today = $state('');
 	onMount(() => {
@@ -320,7 +321,7 @@
 			{remaining.toLocaleString('id-ID')} langkah lagi untuk mencapai target
 			{stepStore.goal.toLocaleString('id-ID')}.
 		{:else}
-			🎉 Target harian tercapai!
+			<span class="goal-hit"><InlineIcon name="check" /> Target harian tercapai!</span>
 		{/if}
 	</p>
 </section>
