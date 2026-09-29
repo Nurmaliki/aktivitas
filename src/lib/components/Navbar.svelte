@@ -47,7 +47,8 @@
 <style>
 	.navbar {
 		background-color: var(--color-surface);
-		border-bottom: 1px solid var(--color-border);
+		border-bottom: none;
+		box-shadow: 0 12px 26px -18px var(--clay-shadow-color);
 		position: sticky;
 		top: 0;
 		z-index: 20;
@@ -58,7 +59,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-4);
-		height: 3.75rem;
+		height: 4rem;
 	}
 
 	nav {
@@ -71,7 +72,7 @@
 		gap: var(--space-2);
 		text-decoration: none;
 		color: var(--color-text);
-		font-weight: 700;
+		font-weight: 900;
 		flex-shrink: 0;
 	}
 
@@ -79,16 +80,18 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 1.5rem;
-		height: 1.5rem;
-		border-radius: var(--radius-sm);
+		width: 2rem;
+		height: 2rem;
+		border-radius: var(--radius-md);
 		background-color: var(--color-primary);
+		background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
 		color: #fff;
-		font-size: 0.85rem;
+		font-size: 1rem;
+		box-shadow: var(--shadow-clay-sm);
 	}
 
 	.brand-name {
-		font-size: 1rem;
+		font-size: 1.05rem;
 	}
 
 	.nav-list {
@@ -108,14 +111,17 @@
 
 	.nav-link {
 		display: inline-block;
-		padding: 0.4rem 0.75rem;
-		border-radius: var(--radius-md);
+		padding: 0.45rem 0.85rem;
+		border-radius: var(--radius-full);
 		text-decoration: none;
 		color: var(--color-text-muted);
 		font-size: 0.9rem;
-		font-weight: 600;
+		font-weight: 700;
 		white-space: nowrap;
-		transition: background-color 0.15s ease, color 0.15s ease;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease,
+			box-shadow 0.15s ease;
 	}
 
 	.nav-link:hover {
@@ -124,8 +130,10 @@
 	}
 
 	.nav-link.active {
-		background-color: var(--color-primary-soft);
-		color: var(--color-primary);
+		background-color: var(--color-primary);
+		background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
+		color: #fff;
+		box-shadow: var(--shadow-clay-sm);
 	}
 
 	@media (max-width: 480px) {

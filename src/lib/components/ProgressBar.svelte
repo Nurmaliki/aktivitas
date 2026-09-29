@@ -59,20 +59,23 @@
 
 	.progress-track {
 		width: 100%;
-		height: 0.5rem;
-		background-color: var(--color-border);
+		height: 0.7rem;
+		background-color: var(--color-surface-alt);
 		border-radius: var(--radius-full);
 		overflow: hidden;
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.progress-sm .progress-track {
-		height: 0.35rem;
+		height: 0.5rem;
 	}
 
 	.progress-fill {
 		height: 100%;
 		background-color: var(--color-primary);
+		background-image: linear-gradient(145deg, #9385f6, #6f5cec);
 		border-radius: var(--radius-full);
 		transition: width 0.3s ease;
+		box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.12), inset 0 3px 5px rgba(255, 255, 255, 0.4);
 	}
 </style>

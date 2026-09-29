@@ -1,32 +1,71 @@
 :root {
-	/* Palette — restrained, dashboard-oriented */
-	--color-bg: #f5f7fa;
-	--color-surface: #ffffff;
-	--color-surface-alt: #f8fafc;
-	--color-border: #e5e9f0;
-	--color-border-strong: #d3dae5;
-	--color-text: #1f2937;
-	--color-text-muted: #64748b;
-	--color-text-subtle: #94a3b8;
+	/* -----------------------------------------------------------------------
+	   Claymorphism theme — soft pastel lilac/blue, puffy 3D "clay" surfaces.
+	   Balanced intensity: clearly 3D but still clean for a productivity app.
+	   ----------------------------------------------------------------------- */
 
-	--color-primary: #2563eb;
-	--color-primary-hover: #1d4ed8;
-	--color-primary-soft: #eff4ff;
-	--color-success: #16a34a;
-	--color-success-soft: #ecfdf3;
-	--color-warning: #d97706;
-	--color-warning-soft: #fef3c7;
-	--color-danger: #dc2626;
-	--color-danger-soft: #fef2f2;
+	/* Palette */
+	--color-bg: #ece9fb; /* soft pastel lilac */
+	--color-bg-tint: #e4e0fa;
+	--color-surface: #f4f2fe; /* puffy clay card */
+	--color-surface-alt: #e9e5fb;
+	--color-surface-raised: #f8f7ff;
+	--color-border: #ddd7f5;
+	--color-border-strong: #cdc4ee;
+	--color-text: #363151;
+	--color-text-muted: #6b6590;
+	--color-text-subtle: #928cb4;
 
-	--radius-sm: 6px;
-	--radius-md: 10px;
-	--radius-lg: 14px;
+	--color-primary: #7c6cf0; /* soft indigo/violet */
+	--color-primary-hover: #6a58ea;
+	--color-primary-soft: #e6e1fd;
+	--color-primary-contrast: #ffffff;
+	--color-success: #5cc9a7;
+	--color-success-soft: #d8f5ec;
+	--color-warning: #f0b24e;
+	--color-warning-soft: #fdeecf;
+	--color-danger: #f0708f;
+	--color-danger-soft: #fde1e8;
+	--color-danger-hover: #e75b7e;
+
+	/* Radii — generous, rounded clay corners */
+	--radius-sm: 12px;
+	--radius-md: 18px;
+	--radius-lg: 26px;
+	--radius-xl: 34px;
 	--radius-full: 999px;
 
-	--shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-	--shadow-md: 0 2px 8px rgba(15, 23, 42, 0.08);
-	--shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.15);
+	/* -----------------------------------------------------------------------
+	   Clay shadow recipe: a soft outer drop shadow + an inner top-left
+	   highlight (light source) + an inner bottom-right shade. This is what
+	   gives the puffy, extruded-clay look.
+	   `--clay-*` variables let individual surfaces tune the tint.
+	   ----------------------------------------------------------------------- */
+	--clay-highlight: rgba(255, 255, 255, 0.9);
+	--clay-shade: rgba(124, 108, 240, 0.28);
+	--clay-shadow-color: rgba(124, 108, 240, 0.28);
+
+	--shadow-clay-sm:
+		0 6px 14px -6px var(--clay-shadow-color),
+		inset 4px 4px 8px var(--clay-highlight),
+		inset -5px -5px 10px var(--clay-shade);
+	--shadow-clay:
+		0 14px 30px -12px var(--clay-shadow-color),
+		inset 6px 6px 12px var(--clay-highlight),
+		inset -7px -7px 14px var(--clay-shade);
+	--shadow-clay-lg:
+		0 26px 50px -18px var(--clay-shadow-color),
+		inset 8px 8px 16px var(--clay-highlight),
+		inset -9px -9px 18px var(--clay-shade);
+	/* Pressed/inset clay (for inputs, tracks, active states). */
+	--shadow-clay-inset:
+		inset 5px 5px 10px var(--clay-shade),
+		inset -5px -5px 10px var(--clay-highlight);
+
+	/* Backwards-compatible aliases used across components. */
+	--shadow-sm: var(--shadow-clay-sm);
+	--shadow-md: var(--shadow-clay);
+	--shadow-lg: var(--shadow-clay-lg);
 
 	--space-1: 0.25rem;
 	--space-2: 0.5rem;
@@ -37,8 +76,8 @@
 	--space-8: 2rem;
 	--space-10: 2.5rem;
 
-	--font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
-		sans-serif;
+	--font-sans: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+		Arial, sans-serif;
 	--max-width: 1120px;
 
 	color-scheme: light;
@@ -57,10 +96,14 @@ html {
 body {
 	margin: 0;
 	background-color: var(--color-bg);
+	background-image:
+		radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.75), transparent 42%),
+		radial-gradient(circle at 88% 4%, rgba(124, 108, 240, 0.12), transparent 46%);
+	background-attachment: fixed;
 	color: var(--color-text);
 	font-family: var(--font-sans);
 	font-size: 16px;
-	line-height: 1.5;
+	line-height: 1.55;
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -77,8 +120,9 @@ button {
 }
 
 :focus-visible {
-	outline: 2px solid var(--color-primary);
-	outline-offset: 2px;
+	outline: 3px solid var(--color-primary);
+	outline-offset: 3px;
+	border-radius: var(--radius-sm);
 }
 
 /* ---------- Layout ---------- */
@@ -108,9 +152,9 @@ main {
 }
 
 .page-header h1 {
-	font-size: 1.75rem;
-	font-weight: 700;
-	letter-spacing: -0.01em;
+	font-size: 1.9rem;
+	font-weight: 900;
+	letter-spacing: -0.015em;
 }
 
 .page-header .subtitle {
@@ -131,18 +175,18 @@ main {
 	justify-content: center;
 	gap: var(--space-2);
 	border: 1px solid transparent;
-	border-radius: var(--radius-md);
-	padding: 0.55rem 1rem;
+	border-radius: var(--radius-full);
+	padding: 0.6rem 1.25rem;
 	font-size: 0.9rem;
-	font-weight: 600;
+	font-weight: 800;
 	line-height: 1.2;
 	cursor: pointer;
 	text-decoration: none;
 	transition:
+		transform 0.12s ease,
+		box-shadow 0.18s ease,
 		background-color 0.15s ease,
-		border-color 0.15s ease,
-		color 0.15s ease,
-		box-shadow 0.15s ease;
+		color 0.15s ease;
 	white-space: nowrap;
 }
 
@@ -150,68 +194,81 @@ a.btn:hover {
 	text-decoration: none;
 }
 
+.btn:active:not(:disabled) {
+	transform: translateY(1px) scale(0.985);
+}
+
 .btn:disabled {
 	cursor: not-allowed;
 	opacity: 0.55;
+	box-shadow: none;
 }
 
 .btn-primary {
 	background-color: var(--color-primary);
-	color: #fff;
+	background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
+	color: var(--color-primary-contrast);
+	box-shadow: var(--shadow-clay-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
 	background-color: var(--color-primary-hover);
+	background-image: linear-gradient(145deg, #8a7bf3, #6350e8);
 }
 
 .btn-secondary {
 	background-color: var(--color-surface);
 	color: var(--color-text);
-	border-color: var(--color-border-strong);
+	border-color: transparent;
+	box-shadow: var(--shadow-clay-sm);
 }
 
 .btn-secondary:hover:not(:disabled) {
-	background-color: var(--color-surface-alt);
+	background-color: var(--color-surface-raised);
 }
 
 .btn-danger {
 	background-color: var(--color-danger);
+	background-image: linear-gradient(145deg, #f4879f, #ec6288);
 	color: #fff;
+	box-shadow: var(--shadow-clay-sm);
 }
 
 .btn-danger:hover:not(:disabled) {
-	background-color: #b91c1c;
+	background-color: var(--color-danger-hover);
 }
 
 .btn-ghost {
 	background-color: transparent;
 	color: var(--color-text-muted);
 	border-color: transparent;
+	box-shadow: none;
 }
 
 .btn-ghost:hover:not(:disabled) {
 	background-color: var(--color-surface-alt);
 	color: var(--color-text);
+	box-shadow: var(--shadow-clay-sm);
 }
 
 .btn-sm {
-	padding: 0.35rem 0.65rem;
+	padding: 0.4rem 0.85rem;
 	font-size: 0.8rem;
-	border-radius: var(--radius-sm);
+	border-radius: var(--radius-full);
 }
 
 /* ---------- Cards ---------- */
 .card {
 	background-color: var(--color-surface);
-	border: 1px solid var(--color-border);
+	border: none;
 	border-radius: var(--radius-lg);
-	box-shadow: var(--shadow-sm);
+	box-shadow: var(--shadow-clay);
 	padding: var(--space-5);
 }
 
 .card-title {
 	font-size: 1.05rem;
-	font-weight: 700;
+	font-weight: 800;
 }
 
 .card-subtitle {
@@ -229,7 +286,7 @@ a.btn:hover {
 
 .field label {
 	font-size: 0.85rem;
-	font-weight: 600;
+	font-weight: 700;
 	color: var(--color-text);
 }
 
@@ -240,19 +297,22 @@ a.btn:hover {
 	font: inherit;
 	font-size: 0.925rem;
 	color: var(--color-text);
-	background-color: var(--color-surface);
-	border: 1px solid var(--color-border-strong);
+	background-color: var(--color-surface-alt);
+	border: 1px solid transparent;
 	border-radius: var(--radius-md);
-	padding: 0.55rem 0.7rem;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	padding: 0.6rem 0.85rem;
+	box-shadow: var(--shadow-clay-inset);
+	transition: box-shadow 0.18s ease, background-color 0.15s ease;
 }
 
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
 	outline: none;
-	border-color: var(--color-primary);
-	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+	background-color: var(--color-surface-raised);
+	box-shadow:
+		var(--shadow-clay-inset),
+		0 0 0 3px rgba(124, 108, 240, 0.28);
 }
 
 .field textarea {
@@ -304,24 +364,25 @@ a.btn:hover {
 	padding: var(--space-3) var(--space-4);
 	font-size: 0.875rem;
 	border: 1px solid transparent;
+	box-shadow: var(--shadow-clay-sm);
 }
 
 .alert-success {
 	background-color: var(--color-success-soft);
-	color: #166534;
-	border-color: #bbf7d0;
+	color: #1d7a61;
+	border-color: #b6ebd9;
 }
 
 .alert-error {
 	background-color: var(--color-danger-soft);
-	color: #991b1b;
-	border-color: #fecaca;
+	color: #b53a5b;
+	border-color: #f8c2d1;
 }
 
 .alert-info {
 	background-color: var(--color-primary-soft);
-	color: #1e40af;
-	border-color: #bfdbfe;
+	color: #4f3fc4;
+	border-color: #cfc6fb;
 }
 
 /* ---------- Badges ---------- */
@@ -330,10 +391,11 @@ a.btn:hover {
 	align-items: center;
 	border-radius: var(--radius-full);
 	font-size: 0.72rem;
-	font-weight: 600;
-	padding: 0.15rem 0.6rem;
+	font-weight: 700;
+	padding: 0.2rem 0.7rem;
 	line-height: 1.4;
 	white-space: nowrap;
+	box-shadow: var(--shadow-clay-sm);
 }
 
 /* ---------- Utility ---------- */
@@ -442,13 +504,13 @@ table.sr-only td {
 
 	/* Make tap targets comfortable on touch screens. */
 	.btn {
-		padding: 0.6rem 1rem;
+		padding: 0.65rem 1.1rem;
 	}
 
 	.btn-sm {
-		padding: 0.45rem 0.75rem;
+		padding: 0.5rem 0.85rem;
 		font-size: 0.82rem;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-full);
 	}
 }
 

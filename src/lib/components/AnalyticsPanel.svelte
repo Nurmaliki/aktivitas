@@ -205,27 +205,29 @@
 		flex-wrap: wrap;
 		gap: 2px;
 		background-color: var(--color-surface-alt);
-		border-radius: var(--radius-md);
-		padding: 2px;
+		border-radius: var(--radius-full);
+		padding: 4px;
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.range-btn {
 		border: none;
 		background: none;
-		padding: 0.35rem 0.7rem;
-		border-radius: var(--radius-sm);
+		padding: 0.4rem 0.85rem;
+		border-radius: var(--radius-full);
 		font: inherit;
 		font-size: 0.82rem;
-		font-weight: 600;
+		font-weight: 700;
 		color: var(--color-text-muted);
 		cursor: pointer;
 		white-space: nowrap;
+		transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 	}
 
 	.range-btn.active {
-		background-color: var(--color-surface);
-		color: var(--color-primary);
-		box-shadow: var(--shadow-sm);
+		background-color: var(--color-primary);
+		color: #fff;
+		box-shadow: var(--shadow-clay-sm);
 	}
 
 	.custom-range {
@@ -242,11 +244,12 @@
 	}
 
 	.custom-range input {
-		padding: 0.3rem 0.5rem;
+		padding: 0.4rem 0.6rem;
 		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border);
-		background-color: var(--color-surface);
+		border: 1px solid transparent;
+		background-color: var(--color-surface-alt);
 		color: var(--color-text);
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.kpi-grid {
@@ -262,6 +265,7 @@
 		padding: var(--space-3);
 		background-color: var(--color-surface-alt);
 		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.kpi-value {
@@ -329,19 +333,19 @@
 	.bar {
 		width: 0.6rem;
 		min-height: 2px;
-		border-radius: 2px 2px 0 0;
+		border-radius: var(--radius-full) var(--radius-full) 0 0;
 		background-color: var(--color-primary);
 		display: inline-block;
 	}
 
 	.bar.planned {
-		background-color: #93c5fd;
+		background-color: #c3b8fa;
 	}
 	.bar.actual {
-		background-color: #1d4ed8;
+		background-color: #6f5cec;
 	}
 	.bar.focus {
-		background-color: #7c3aed;
+		background-color: #5cc9a7;
 	}
 
 	.bar-label {
@@ -361,15 +365,15 @@
 		display: inline-block;
 		width: 10px;
 		height: 10px;
-		border-radius: 2px;
+		border-radius: 3px;
 		margin-right: 4px;
 	}
 
 	.swatch.planned {
-		background-color: #93c5fd;
+		background-color: #c3b8fa;
 	}
 	.swatch.actual {
-		background-color: #1d4ed8;
+		background-color: #6f5cec;
 	}
 
 	.category-list,
@@ -392,15 +396,18 @@
 
 	.category-bar {
 		height: 0.6rem;
-		background-color: var(--color-border);
+		background-color: var(--color-surface-alt);
 		border-radius: 999px;
 		overflow: hidden;
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.category-fill {
 		display: block;
 		height: 100%;
 		background-color: var(--color-primary);
+		background-image: linear-gradient(145deg, #9385f6, #6f5cec);
+		border-radius: 999px;
 	}
 
 	.category-val {
@@ -413,7 +420,7 @@
 		padding: var(--space-2) var(--space-3);
 		background-color: var(--color-surface-alt);
 		border-left: 3px solid var(--color-primary);
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-md);
 	}
 
 	.empty-state {

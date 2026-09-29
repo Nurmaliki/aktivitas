@@ -142,7 +142,7 @@
 	}
 
 	.activity-name {
-		font-weight: 600;
+		font-weight: 700;
 		font-size: 0.95rem;
 		word-break: break-word;
 	}
@@ -193,8 +193,9 @@
 	.activity-subtasks {
 		margin-top: var(--space-2);
 		padding: var(--space-2) var(--space-3);
-		background-color: var(--color-surface-alt, rgba(0, 0, 0, 0.03));
+		background-color: var(--color-surface-alt);
 		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.activity-item.completed .meta-status {

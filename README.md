@@ -393,6 +393,25 @@ dibatasi maksimum 200.000/hari. Baris tidak valid dilewati dan dilaporkan.
   produksi di browser sungguhan dan memverifikasi **0 error konsol**, **0 overflow**,
   alt/label lengkap, dan smoke test CRUD + persistensi IndexedDB.
 
+## Tema & Desain — Claymorphism
+
+Antarmuka memakai gaya **Claymorphism**: permukaan "tanah liat" 3D yang lembut dan
+menggembung. Karakteristiknya diimplementasikan lewat design token di `app.css`:
+
+- **Radii besar** — sudut membulat (`--radius-sm` 12px s/d `--radius-xl` 34px, tombol pill).
+- **Clay shadow** — resep bayangan bertanda tangan: *outer drop shadow* halus +
+  *inner highlight* dari kiri-atas (sumber cahaya) + *inner shade* ke kanan-bawah,
+  sehingga terlihat seperti clay yang dipadatkan (`--shadow-clay*`).
+- **Inset clay** untuk elemen "tertekan" seperti input, track progress, dan track
+  grafik (`--shadow-clay-inset`).
+- **Palet pastel lilac/blue** — latar lavender lembut, kartu lilac, primer
+  indigo/violet dengan gradien halus.
+- **Tipografi Nunito** — font membulat yang serasi dengan bentuk clay.
+- **Balanced** — efek jelas terasa 3D namun tetap bersih dan mudah dibaca.
+
+Semua komponen mengambil warna/bentuk/bayangan dari token, sehingga tema dapat
+disesuaikan dari satu tempat (`src/app.css`). Mode terang saja untuk saat ini.
+
 ---
 
 ## Deploy ke Vercel

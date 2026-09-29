@@ -124,6 +124,7 @@
 		background-color: var(--color-surface-alt);
 		border-radius: var(--radius-sm);
 		overflow: hidden;
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.goal-tick {
@@ -138,12 +139,14 @@
 	.bar-fill {
 		width: 100%;
 		background-color: var(--color-primary);
+		background-image: linear-gradient(180deg, #9385f6, #6f5cec);
 		border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 		transition: height 0.3s ease;
 	}
 
 	.bar-fill.goal-met {
 		background-color: var(--color-success);
+		background-image: linear-gradient(180deg, #79d6ba, #4bbd97);
 	}
 
 	.bar-value {

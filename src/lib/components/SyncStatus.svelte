@@ -66,11 +66,11 @@
 <style>
 	.state-badge {
 		font-size: 0.8rem;
-		padding: 0.15rem 0.6rem;
+		padding: 0.2rem 0.7rem;
 		border-radius: 999px;
 		background-color: var(--color-primary-soft);
 		color: var(--color-primary);
-		font-weight: 600;
+		font-weight: 700;
 	}
 
 	.state-badge[data-state='error'] {
@@ -79,7 +79,7 @@
 	}
 
 	.state-badge[data-state='disabled'] {
-		background-color: var(--color-surface-muted, #f1f5f9);
+		background-color: var(--color-surface-alt);
 		color: var(--color-text-subtle);
 	}
 

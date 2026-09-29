@@ -70,27 +70,28 @@
 	}
 
 	.heat-cell {
-		width: 12px;
-		height: 12px;
-		border-radius: 2px;
-		background-color: var(--color-surface-alt, #e2e8f0);
+		width: 13px;
+		height: 13px;
+		border-radius: 4px;
+		background-color: var(--color-surface-alt);
 		flex-shrink: 0;
 	}
 
 	.level-0 {
-		background-color: var(--color-surface-alt, #eef2f6);
+		background-color: var(--color-surface-alt);
+		box-shadow: var(--shadow-clay-inset);
 	}
 	.level-1 {
-		background-color: #cbd5e1;
+		background-color: #d8d2f8;
 	}
 	.level-2 {
-		background-color: #93c5fd;
+		background-color: #b3a8f3;
 	}
 	.level-3 {
-		background-color: #3b82f6;
+		background-color: #8f81f5;
 	}
 	.level-4 {
-		background-color: #1d4ed8;
+		background-color: #6f5cec;
 	}
 
 	.heat-legend {

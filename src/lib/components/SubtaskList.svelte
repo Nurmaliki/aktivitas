@@ -200,16 +200,18 @@
 	}
 
 	.subtask-bar {
-		height: 6px;
-		background-color: var(--color-border);
+		height: 8px;
+		background-color: var(--color-surface-alt);
 		border-radius: 999px;
 		overflow: hidden;
+		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.subtask-bar-fill {
 		display: block;
 		height: 100%;
 		background-color: var(--color-primary);
+		background-image: linear-gradient(145deg, #9385f6, #6f5cec);
 		transition: width 0.2s ease;
 	}
 
@@ -252,7 +254,7 @@
 	}
 
 	.subtask-title:hover:not(:disabled) {
-		background-color: var(--color-surface-alt, rgba(0, 0, 0, 0.04));
+		background-color: var(--color-surface-alt);
 	}
 
 	.subtask-edit {
@@ -273,10 +275,10 @@
 	}
 
 	.icon-btn {
-		border: 1px solid var(--color-border);
+		border: 1px solid transparent;
 		background-color: var(--color-surface);
 		color: var(--color-text-muted);
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-full);
 		width: 1.75rem;
 		height: 1.75rem;
 		line-height: 1;
@@ -285,8 +287,10 @@
 	}
 
 	.icon-btn:hover:not(:disabled) {
-		color: var(--color-text);
-		border-color: var(--color-primary);
+		color: #fff;
+		background-color: var(--color-primary);
+		border-color: transparent;
+		box-shadow: var(--shadow-clay-sm);
 	}
 
 	.icon-btn:disabled {
@@ -295,8 +299,9 @@
 	}
 
 	.icon-btn.danger:hover:not(:disabled) {
-		color: var(--color-danger, #c0392b);
-		border-color: var(--color-danger, #c0392b);
+		color: #fff;
+		background-color: var(--color-danger);
+		border-color: transparent;
 	}
 
 	.subtask-add {

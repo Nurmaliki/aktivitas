@@ -32,7 +32,7 @@
 	<link rel="icon" href={favicon} />
 	<link rel="manifest" href="/manifest.webmanifest" />
 	<link rel="apple-touch-icon" href="/icons/icon-192.png" />
-	<meta name="theme-color" content="#1e3a8a" />
+	<meta name="theme-color" content="#ece9fb" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Daily Activity" />

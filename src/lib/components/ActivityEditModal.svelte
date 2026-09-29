@@ -195,18 +195,20 @@
 <style>
 	.modal {
 		border: none;
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-xl);
 		padding: 0;
 		max-width: 34rem;
 		width: calc(100% - 2rem);
 		max-height: calc(100dvh - 2rem);
 		overflow-y: auto;
-		box-shadow: var(--shadow-lg);
+		background-color: var(--color-surface);
+		box-shadow: var(--shadow-clay-lg);
 		color: var(--color-text);
 	}
 
 	.modal::backdrop {
-		background-color: rgba(15, 23, 42, 0.45);
+		background-color: rgba(94, 82, 160, 0.4);
+		backdrop-filter: blur(2px);
 	}
 
 	.modal-body {
@@ -252,7 +254,7 @@
 
 	.modal-section-title {
 		font-size: 0.95rem;
-		font-weight: 700;
+		font-weight: 800;
 		margin-bottom: var(--space-2);
 	}
 </style>

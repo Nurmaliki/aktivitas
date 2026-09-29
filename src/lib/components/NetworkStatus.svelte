@@ -30,13 +30,15 @@
 	}
 
 	.net-banner.offline {
-		background-color: var(--color-warning-soft, #fef3c7);
-		color: var(--color-warning, #92400e);
+		background-color: var(--color-warning-soft);
+		color: #9a6a14;
+		box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.06);
 	}
 
 	.net-banner.update {
 		background-color: var(--color-primary-soft);
-		color: var(--color-primary);
+		color: #503fc6;
+		box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.06);
 	}
 
 	.net-dot {
