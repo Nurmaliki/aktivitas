@@ -6,7 +6,7 @@
  */
 
 import type { Subtask } from '$lib/types/common';
-import { generateId } from '$lib/repositories/db-core';
+import { generateId } from '$lib/utils/id';
 
 const MAX_SUBTASK_TITLE = 200;
 export const MAX_SUBTASKS = 100;

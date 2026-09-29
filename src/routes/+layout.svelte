@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import AlarmScreen from '$lib/components/AlarmScreen.svelte';
@@ -13,8 +14,10 @@
 
 	let { children } = $props();
 
-	// Kick off the initial IndexedDB loads once, on the client.
-	$effect(() => {
+	// Kick off the initial IndexedDB loads once, on the client. `onMount` runs a
+	// single time (unlike `$effect`, which re-runs whenever any reactive state it
+	// reads changes) so the cleanup fires exactly once on teardown.
+	onMount(() => {
 		activityStore.init();
 		stepStore.init();
 		habitStore.init();

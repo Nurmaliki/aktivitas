@@ -25,6 +25,8 @@ class ActivityStore {
 	initialized = $state(false);
 
 	private loadPromise: Promise<void> | null = null;
+	/** Serializes reminder patches so concurrent writes can't clobber each other. */
+	private reminderChain: Promise<unknown> = Promise.resolve();
 
 	/** Sort newest date first, then newest createdAt. */
 	private sort(list: Activity[]): Activity[] {
@@ -119,7 +121,8 @@ class ActivityStore {
 	}
 
 	/** Flip the completed flag of an activity. */
-	async toggle(id: string): Promise<void> {		const current = this.activities.find((activity) => activity.id === id);
+	async toggle(id: string): Promise<void> {
+		const current = this.activities.find((activity) => activity.id === id);
 		if (!current) return;
 		this.saving = true;
 		this.error = null;
@@ -138,20 +141,32 @@ class ActivityStore {
 	/**
 	 * Patch non-`ActivityInput` fields (reminder, snoozedUntil, status, etc.)
 	 * directly on a stored activity. Used by the reminder/alarm engine.
+	 *
+	 * Patches are serialized so two rapid updates to the same activity (e.g. a
+	 * snooze immediately followed by a status change) can't last-write-wins
+	 * against each other.
 	 */
 	async setReminder(id: string, changes: Partial<Activity>): Promise<void> {
-		this.error = null;
-		try {
-			const updated = await db.patchActivity(id, $state.snapshot(changes) as Partial<Activity>);
-			this.activities = this.sort(
-				this.activities.map((activity) => (activity.id === id ? updated : activity))
-			);
-		} catch (error) {
-			this.setError(error, 'Gagal memperbarui pengingat.');
-		}
+		const run = this.reminderChain.then(async () => {
+			this.error = null;
+			try {
+				const updated = await db.patchActivity(id, $state.snapshot(changes) as Partial<Activity>);
+				this.activities = this.sort(
+					this.activities.map((activity) => (activity.id === id ? updated : activity))
+				);
+			} catch (error) {
+				this.setError(error, 'Gagal memperbarui pengingat.');
+			}
+		});
+		this.reminderChain = run.catch(() => undefined);
+		return run;
 	}
 
-	/** Replace the checklist of an activity (used by the inline list UI). */	async updateSubtasks(id: string, subtasks: import('$lib/types/common').Subtask[]): Promise<void> {
+	/** Replace the checklist of an activity (used by the inline list UI). */
+	async updateSubtasks(
+		id: string,
+		subtasks: import('$lib/types/common').Subtask[]
+	): Promise<void> {
 		this.saving = true;
 		this.error = null;
 		try {
@@ -169,7 +184,8 @@ class ActivityStore {
 	}
 
 	/** Delete an activity by id. */
-	async remove(id: string): Promise<void> {		this.saving = true;
+	async remove(id: string): Promise<void> {
+		this.saving = true;
 		this.error = null;
 		try {
 			await db.deleteActivity(id);

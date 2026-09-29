@@ -8,6 +8,7 @@ import {
 	getMonthStart,
 	getWeekdayShort,
 	isValidDateString,
+	localDateFromISO,
 	parseLocalDate
 } from '$lib/utils/date';
 import { formatDuration } from '$lib/utils/statistics';
@@ -152,5 +153,22 @@ describe('formatDuration', () => {
 		expect(formatDuration(-10)).toBe('0m');
 		expect(formatDuration(NaN)).toBe('0m');
 		expect(formatDuration(Infinity)).toBe('0m');
+	});
+});
+
+describe('localDateFromISO', () => {
+	it('maps a timestamp to the local calendar date', () => {
+		// 2024-03-05T23:30 local -> local date 2024-03-05 regardless of UTC offset.
+		const iso = new Date(2024, 2, 5, 23, 30).toISOString();
+		expect(localDateFromISO(iso)).toBe('2024-03-05');
+	});
+
+	it('handles local midnight boundaries in local time', () => {
+		const iso = new Date(2024, 2, 5, 0, 15).toISOString();
+		expect(localDateFromISO(iso)).toBe('2024-03-05');
+	});
+
+	it('returns an empty string for invalid input', () => {
+		expect(localDateFromISO('not-a-date')).toBe('');
 	});
 });

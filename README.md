@@ -161,12 +161,14 @@ src/
 │   │   ├── Navbar.svelte / ConfirmDialog.svelte
 │   │   ├── NavIcon.svelte                # Ikon SVG inline (menu/drawer)
 │   ├── repositories/                                # Akses IndexedDB (per-domain)
-│   │   ├── db-core.ts                # Primitif bersama (open, withStore, generateId)
+│   │   ├── db-core.ts                # SATU sumber skema v3 + primitif (open, withStore,
+│   │   │                             #   withMultiStore, openDatabase, generateId)
 │   │   ├── habitRepository.ts        # Habits + habitLogs (soft-delete)
 │   │   ├── focusRepository.ts        # Sesi fokus
 │   │   └── syncRepository.ts         # Queue sinkronisasi + metadata
 │   ├── services/
-│   │   ├── db.ts                     # Skema IndexedDB v3 + CRUD aktivitas/langkah/pengaturan
+│   │   ├── db.ts                     # CRUD aktivitas/langkah/pengaturan + replaceAllData
+│   │   │                             #   (mengimpor skema & primitif dari repositories/db-core)
 │   │   ├── backup.ts                 # Export/import + validasi (v1/v2/v3)
 │   │   ├── motionSensor.ts           # Deteksi langkah (DeviceMotionEvent)
 │   │   ├── stepImport.ts             # Parser impor langkah (CSV/JSON)
@@ -182,7 +184,7 @@ src/
 │   └── utils/                        # Logika murni + unit test berdekatan
 │       ├── date / statistics / stepStatistics / validation / validators
 │       ├── migration / subtasks / planner / calendar / focus / habits
-│       ├── analytics / rescheduling / filter
+│       ├── analytics / rescheduling / filter / id
 │       └── syncEngine.ts             # Inti sinkronisasi murni (konflik, backoff)
 ├── routes/
 │   ├── +layout.svelte                # Shell + inisialisasi store + AlarmScreen
@@ -342,6 +344,10 @@ GET  {endpoint}/pull?since=<cursor>              -> { changes: SyncChange[], cur
 ## Pengingat / Alarm — Batasan Web
 
 - Pengingat berbasis **timestamp** dan tetap konsisten setelah refresh.
+- **Catch-up**: pengingat yang terlewat saat tab ditutup/di-suspend (dalam
+  jendela 24 jam) tetap dimunculkan pada tick berikutnya, bukan hilang diam-diam.
+  Setiap kemunculan hanya dipicu **sekali** (dedupe berbasis kunci + dipangkas
+  otomatis setelah ~2 hari).
 - Saat halaman dibuka, alarm memakai efek **bunyi/getar/notifikasi** (izin
   notifikasi dapat diminta).
 - **PWA/web tidak dapat menjamin alarm berbunyi seperti jam native saat aplikasi

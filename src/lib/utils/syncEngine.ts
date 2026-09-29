@@ -1,14 +1,15 @@
 /**
  * Sync engine core (pure, testable).
  *
- * The engine has three concerns split out here so they can be unit-tested
- * without IndexedDB or network:
+ * Three concerns are extracted here so they can be unit-tested without
+ * IndexedDB or network:
  *  1. `queueEntryToChange` — turn a stored queue entry into a SyncChange.
  *  2. `resolveConflicts`   — last-write-wins by `updatedAt` (tombstones win).
  *  3. `nextBackoffMs`      — exponential backoff for retries.
  *
  * The stateful orchestration (reading the queue, calling the adapter, applying
- * pulled changes) lives in `syncEngine.ts` and depends on these helpers.
+ * pulled changes) lives in `services/syncEngine.ts` and depends on these
+ * helpers.
  */
 
 import type { SyncQueueEntry } from '$lib/repositories/syncRepository';

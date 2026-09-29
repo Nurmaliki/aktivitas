@@ -17,6 +17,7 @@
 import type { Activity } from '$lib/types/activity';
 import type { ActivityStatus, Priority, Subtask } from '$lib/types/common';
 import { DEFAULT_PRIORITY } from '$lib/types/common';
+import { parseLocalDate } from '$lib/utils/date';
 
 /** Ensure a subtask list is well-formed (used on read and import). */
 export function normalizeSubtasks(value: unknown): Subtask[] {
@@ -121,9 +122,8 @@ export function deriveMissed(
 }
 
 function parseLocal(date: string, time?: string): Date | null {
-	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-	if (!match) return null;
-	const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+	const base = parseLocalDate(date);
+	if (!base) return null;
 	let hh = 23;
 	let mm = 59;
 	if (time) {
@@ -133,9 +133,8 @@ function parseLocal(date: string, time?: string): Date | null {
 			mm = Number(t[2]);
 		}
 	}
-	const d = new Date(year, month - 1, day, hh, mm);
-	if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
-	return d;
+	base.setHours(hh, mm, 0, 0);
+	return base;
 }
 
 /** Apply missed-derivation across a list (used by analytics / planner). */

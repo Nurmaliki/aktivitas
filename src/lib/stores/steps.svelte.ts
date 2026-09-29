@@ -19,6 +19,8 @@ class StepStore {
 	initialized = $state(false);
 
 	private loadPromise: Promise<void> | null = null;
+	/** Serializes read-modify-write mutations so concurrent increments don't lose data. */
+	private mutationChain: Promise<unknown> = Promise.resolve();
 
 	private sort(list: StepRecord[]): StepRecord[] {
 		return [...list].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
@@ -127,11 +129,22 @@ class StepStore {
 		}
 	}
 
-	/** Add steps to a date (never below 0). */
+	/**
+	 * Add steps to a date (never below 0).
+	 *
+	 * Runs through a serialization chain so two concurrent increments (e.g. a
+	 * sensor tick and a manual entry) cannot both read the same starting value
+	 * and clobber each other's write.
+	 */
 	async addSteps(date: string, delta: number, source: StepSource = 'sensor'): Promise<boolean> {
-		const current = this.stepsFor(date);
-		const next = Math.max(0, Math.min(MAX_STEPS_PER_DAY, current + Math.round(delta)));
-		return this.setSteps(date, next, source);
+		const run = this.mutationChain.then(async () => {
+			const current = this.stepsFor(date);
+			const next = Math.max(0, Math.min(MAX_STEPS_PER_DAY, current + Math.round(delta)));
+			return this.setSteps(date, next, source);
+		});
+		// Keep the chain alive even if this link rejects.
+		this.mutationChain = run.catch(() => undefined);
+		return run;
 	}
 
 	async remove(date: string): Promise<void> {

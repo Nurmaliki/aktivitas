@@ -64,7 +64,8 @@ export function isValidDateString(dateString: string): boolean {
 }
 
 /** Add `days` (can be negative) to a local YYYY-MM-DD string. */
-export function addDays(dateString: string, days: number): string {	const date = parseLocalDate(dateString);
+export function addDays(dateString: string, days: number): string {
+	const date = parseLocalDate(dateString);
 	if (!date) return dateString;
 	date.setDate(date.getDate() + days);
 	return getLocalDateString(date);
@@ -135,9 +136,21 @@ export function formatLocalDateTime(iso: string): string {
 	return `${day} ${month} ${date.getFullYear()}, ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+/**
+ * Convert an ISO timestamp into the *local* YYYY-MM-DD date it belongs to.
+ *
+ * Use this instead of `iso.slice(0, 10)`: slicing an ISO string yields the UTC
+ * calendar date, which is off by one day for users east/west of UTC near
+ * midnight. Returns '' for invalid input.
+ */
+export function localDateFromISO(iso: string): string {
+	const date = new Date(iso);
+	if (Number.isNaN(date.getTime())) return '';
+	return getLocalDateString(date);
+}
+
 /** Short weekday label (Sen/Sel/...) for a local YYYY-MM-DD string. */
-export function getWeekdayShort(dateString: string): string {
-	const date = parseLocalDate(dateString);
+export function getWeekdayShort(dateString: string): string {	const date = parseLocalDate(dateString);
 	if (!date) return '';
 	return WEEKDAY_SHORT[date.getDay()];
 }

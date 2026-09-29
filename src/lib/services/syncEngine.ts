@@ -25,7 +25,8 @@ import {
 } from '$lib/utils/syncEngine';
 import {
 	getActivities,
-	upsertActivity
+	upsertActivity,
+	deleteActivity
 } from '$lib/services/db';
 import {
 	getHabits,
@@ -56,8 +57,10 @@ export interface SyncRunResult {
 
 /**
  * Push all queued mutations to the adapter. Entries the adapter accepts are
- * removed from the queue; failures bump the attempt counter (backoff is applied
- * by the caller/scheduler) and are left in place.
+ * removed from the queue; failures bump the attempt counter and are left in
+ * place for a later retry. Backoff is exposed via `nextBackoffMs` (utils) but
+ * not yet applied by an automatic scheduler, so retries happen on the next
+ * manual/triggered sync.
  */
 export async function pushQueue(adapter: SyncAdapter): Promise<number> {
 	const queue = await getQueue();
@@ -103,8 +106,12 @@ async function applyChange(change: SyncChange): Promise<boolean> {
 	switch (change.entity) {
 		case 'activity':
 			if (change.operation === 'delete') {
-				// Local delete path is handled elsewhere; treat as no-op here to
-				// avoid destroying data when a tombstone arrives without context.
+				// A winning remote delete (tombstone) removes the local record so
+				// deletions propagate in both directions.
+				if (change.recordId) {
+					await deleteActivity(change.recordId);
+					return true;
+				}
 				return false;
 			}
 			if (isValidActivity(payload)) {
@@ -160,16 +167,28 @@ export async function pullAndApply(adapter: SyncAdapter): Promise<number> {
 /** Run one full sync cycle (push then pull). Never throws. */
 export async function runSync(adapter: SyncAdapter): Promise<SyncRunResult> {
 	if (!adapter.enabled) return { pushed: 0, pulled: 0, applied: 0 };
+	let pushed = 0;
+	let applied = 0;
 	try {
-		const pushed = await pushQueue(adapter);
-		const applied = await pullAndApply(adapter);
+		pushed = await pushQueue(adapter);
+	} catch (error) {
+		return {
+			pushed,
+			pulled: 0,
+			applied: 0,
+			error: error instanceof Error ? error.message : 'Sinkronisasi gagal.'
+		};
+	}
+	try {
+		applied = await pullAndApply(adapter);
 		await setMetadata(LAST_SYNC_KEY, new Date().toISOString());
 		return { pushed, pulled: applied, applied };
 	} catch (error) {
+		// Push already succeeded; report that progress rather than zeroing it.
 		return {
-			pushed: 0,
+			pushed,
 			pulled: 0,
-			applied: 0,
+			applied,
 			error: error instanceof Error ? error.message : 'Sinkronisasi gagal.'
 		};
 	}
@@ -177,16 +196,28 @@ export async function runSync(adapter: SyncAdapter): Promise<SyncRunResult> {
 
 /** Read the current sync status snapshot (adapter id + queue depth). */
 export async function readStatus(adapter: SyncAdapter): Promise<SyncStatus> {
-	const [pending, lastSyncedAt] = await Promise.all([
-		getQueueSize(),
-		getMetadata(LAST_SYNC_KEY)
-	]);
-	return {
-		state: adapter.enabled ? 'idle' : 'disabled',
-		adapter: adapter.id,
-		pending,
-		lastSyncedAt
-	};
+	if (!adapter.enabled) {
+		return { state: 'disabled', adapter: adapter.id, pending: 0 };
+	}
+	try {
+		const [pending, lastSyncedAt] = await Promise.all([
+			getQueueSize(),
+			getMetadata(LAST_SYNC_KEY)
+		]);
+		return {
+			state: 'idle',
+			adapter: adapter.id,
+			pending,
+			lastSyncedAt
+		};
+	} catch (error) {
+		return {
+			state: 'error',
+			adapter: adapter.id,
+			pending: 0,
+			error: error instanceof Error ? error.message : 'Gagal membaca status sinkronisasi.'
+		};
+	}
 }
 
 export type { SyncQueueEntry };

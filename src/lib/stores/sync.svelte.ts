@@ -40,9 +40,15 @@ class SyncStore {
 			const status = await readStatus(this.adapter);
 			this.pending = status.pending;
 			this.lastSyncedAt = status.lastSyncedAt;
-			if (!this.busy) this.state = status.state;
-		} catch {
-			// Status read failures are non-fatal.
+			if (status.state === 'error') {
+				this.state = 'error';
+				this.error = status.error;
+			} else if (!this.busy) {
+				this.state = status.state;
+			}
+		} catch (error) {
+			this.state = 'error';
+			this.error = error instanceof Error ? error.message : 'Gagal membaca status sinkronisasi.';
 		}
 	}
 

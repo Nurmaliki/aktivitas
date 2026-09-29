@@ -91,6 +91,9 @@ export function stopAlarmTone(): void {
 	}
 }
 
+/** Tracks whether we started a vibration, so we only cancel one when active. */
+let vibrating = false;
+
 /** Trigger device vibration when supported (no-op otherwise). */
 export function vibrate(pattern: number | number[] = [200, 100, 200, 100, 400]): void {
 	if (!browser || typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
@@ -98,12 +101,15 @@ export function vibrate(pattern: number | number[] = [200, 100, 200, 100, 400]):
 	}
 	try {
 		navigator.vibrate(pattern);
+		vibrating = true;
 	} catch {
 		/* ignore */
 	}
 }
 
 export function stopVibration(): void {
+	if (!vibrating) return;
+	vibrating = false;
 	if (!browser || typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
 		return;
 	}

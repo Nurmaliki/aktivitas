@@ -233,7 +233,7 @@ export function mergeHabits(habits: Habit[]): Promise<number> {
 	return withRawStore(
 		'readwrite',
 		(store, transaction) =>
-			new Promise<number>((resolve) => {
+			new Promise<number>((resolve, reject) => {
 				const keysReq = store.getAllKeys();
 				keysReq.onsuccess = () => {
 					const existing = new Set(keysReq.result.map(String));
@@ -247,17 +247,19 @@ export function mergeHabits(habits: Habit[]): Promise<number> {
 					void transaction;
 					resolve(added);
 				};
-				keysReq.onerror = () => resolve(0);
+				keysReq.onerror = () =>
+					reject(new DatabaseError('Gagal membaca kebiasaan.', keysReq.error));
 			}),
 		STORES.habits
 	);
 }
 
 /** Merge habit logs by (habitId,date), skipping duplicates. Returns count added. */
-export function mergeHabitLogs(logs: HabitLog[]): Promise<number> {	return withRawStore(
+export function mergeHabitLogs(logs: HabitLog[]): Promise<number> {
+	return withRawStore(
 		'readwrite',
 		(store, transaction) =>
-			new Promise<number>((resolve) => {
+			new Promise<number>((resolve, reject) => {
 				const allReq = store.getAll();
 				allReq.onsuccess = () => {
 					const existing = new Set(
@@ -276,7 +278,8 @@ export function mergeHabitLogs(logs: HabitLog[]): Promise<number> {	return withR
 					void transaction;
 					resolve(added);
 				};
-				allReq.onerror = () => resolve(0);
+				allReq.onerror = () =>
+					reject(new DatabaseError('Gagal membaca log kebiasaan.', allReq.error));
 			}),
 		STORES.habitLogs
 	);

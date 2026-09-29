@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import type { Habit, HabitInput, HabitLog } from '$lib/types/habit';
 import * as repo from '$lib/repositories/habitRepository';
 import { getLocalDateString } from '$lib/utils/date';
-import { indexLogs, summarize } from '$lib/utils/habits';
+import { indexLogs, isScheduledOn, summarize } from '$lib/utils/habits';
 
 /**
  * Habit + habit-log store built on Svelte 5 runes.
@@ -164,11 +164,11 @@ class HabitStore {
 		return indexLogs(this.logs);
 	}
 
-	/** Active (non-archived) habits, optionally only those scheduled today. */
+	/** Active (non-archived) habits, optionally only those scheduled for `date`. */
 	activeHabits(scheduledOnly = false, date: string = getLocalDateString()): Habit[] {
 		const active = this.habits.filter((h) => h.active && !h.deletedAt);
 		if (!scheduledOnly) return active;
-		return active;
+		return active.filter((h) => isScheduledOn(h, date));
 	}
 }
 

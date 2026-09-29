@@ -116,7 +116,7 @@ export function mergeFocusSessions(sessions: FocusSession[]): Promise<number> {
 	return withRawStore(
 		'readwrite',
 		(store, transaction) =>
-			new Promise<number>((resolve) => {
+			new Promise<number>((resolve, reject) => {
 				const keysReq = store.getAllKeys();
 				keysReq.onsuccess = () => {
 					const existing = new Set(keysReq.result.map(String));
@@ -130,7 +130,8 @@ export function mergeFocusSessions(sessions: FocusSession[]): Promise<number> {
 					void transaction;
 					resolve(added);
 				};
-				keysReq.onerror = () => resolve(0);
+				keysReq.onerror = () =>
+					reject(new DatabaseError('Gagal membaca sesi fokus.', keysReq.error));
 			}),
 		STORES.focusSessions
 	);

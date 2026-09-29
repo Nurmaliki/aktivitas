@@ -156,10 +156,6 @@ export class MotionSensor {
 			return this.status;
 		}
 
-		if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-			// Still attempt; browsers throttle background tabs but we can resume.
-		}
-
 		if (motionPermissionRequired()) {
 			this.setStatus('permission-required');
 			try {
@@ -184,6 +180,9 @@ export class MotionSensor {
 
 	private listen(): SensorStatus {
 		if (typeof window === 'undefined') return this.status;
+		// Guard against double-registration: adding the same handler twice would
+		// double-count every motion sample.
+		if (this.listening) return this.status;
 		try {
 			window.addEventListener('devicemotion', this.handleMotion, { passive: true });
 			this.listening = true;

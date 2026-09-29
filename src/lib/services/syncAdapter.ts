@@ -50,12 +50,24 @@ export function createHttpAdapter(config: SyncConfig): SyncAdapter {
 	const base = config.endpoint!.replace(/\/+$/, '');
 	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 	if (config.token) headers.Authorization = `Bearer ${config.token}`;
+	const timeoutMs = 15_000;
+
+	/** fetch with an abort-based timeout so a dead endpoint can't hang forever. */
+	async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), timeoutMs);
+		try {
+			return await fetch(url, { ...init, signal: controller.signal });
+		} finally {
+			clearTimeout(timer);
+		}
+	}
 
 	return {
 		id: 'http',
 		enabled: true,
 		async push(changes: SyncChange[]): Promise<SyncPushResult> {
-			const res = await fetch(`${base}/push`, {
+			const res = await fetchWithTimeout(`${base}/push`, {
 				method: 'POST',
 				headers,
 				body: JSON.stringify({ changes })
@@ -67,7 +79,7 @@ export function createHttpAdapter(config: SyncConfig): SyncAdapter {
 		async pull(since?: string): Promise<SyncPullResult> {
 			const url = new URL(`${base}/pull`);
 			if (since) url.searchParams.set('since', since);
-			const res = await fetch(url.toString(), { headers });
+			const res = await fetchWithTimeout(url.toString(), { headers });
 			if (!res.ok) throw new Error(`Sync pull gagal (HTTP ${res.status}).`);
 			const body = (await res.json()) as Partial<SyncPullResult>;
 			return {

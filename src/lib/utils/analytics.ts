@@ -18,7 +18,8 @@ import {
 	getLocalDateString,
 	getMonthDates,
 	getMonthStart,
-	getWeekdayShort
+	getWeekdayShort,
+	localDateFromISO
 } from '$lib/utils/date';
 import { getCategoryStats, type CategoryStats } from '$lib/utils/statistics';
 import {
@@ -124,7 +125,7 @@ function activitiesInRange(activities: Activity[], range: DateRange): Activity[]
 
 function focusInRange(sessions: FocusSession[], range: DateRange): FocusSession[] {
 	return sessions.filter((s) => {
-		const day = s.startedAt.slice(0, 10);
+		const day = localDateFromISO(s.startedAt);
 		return day >= range.from && day <= range.to;
 	});
 }
@@ -270,7 +271,7 @@ function buildDaily(
 			0
 		);
 		const focusMinutes = focusSessions
-			.filter((s) => s.startedAt.slice(0, 10) === date)
+			.filter((s) => localDateFromISO(s.startedAt) === date)
 			.reduce((sum, s) => sum + (s.actualMinutes ?? 0), 0);
 		return {
 			date,

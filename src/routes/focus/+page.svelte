@@ -4,7 +4,7 @@
 	import { MAX_FOCUS_MINUTES, MIN_FOCUS_MINUTES } from '$lib/types/focus';
 	import { focusStore } from '$lib/stores/focus.svelte.js';
 	import { activityStore } from '$lib/stores/activity.svelte.js';
-	import { getLocalDateString } from '$lib/utils/date';
+	import { getLocalDateString, localDateFromISO } from '$lib/utils/date';
 	import { computeTimer, formatClock, phaseLabel, phaseMinutes } from '$lib/utils/focus';
 
 	let today = $state('');
@@ -49,7 +49,7 @@
 				(s) =>
 					s.phase === 'focus' &&
 					s.status === 'completed' &&
-					s.startedAt.slice(0, 10) === prefix
+					localDateFromISO(s.startedAt) === prefix
 			)
 			.reduce((sum, s) => sum + (s.actualMinutes ?? 0), 0);
 	}
@@ -57,7 +57,7 @@
 	const todayMinutes = $derived(today ? todayFocusMinutes() : 0);
 	const completedToday = $derived(
 		focusStore.sessions.filter(
-			(s) => s.phase === 'focus' && s.status === 'completed' && s.startedAt.slice(0, 10) === today
+			(s) => s.phase === 'focus' && s.status === 'completed' && localDateFromISO(s.startedAt) === today
 		).length
 	);
 

@@ -3,9 +3,10 @@ import type { Activity } from '$lib/types/activity';
 import type { ReminderConfig } from '$lib/types/common';
 import { activityStore } from '$lib/stores/activity.svelte.js';
 import {
-	dueOccurrence,
+	dueOccurrences,
 	type ReminderOccurrence
 } from '$lib/services/reminderEngine';
+import { getLocalDateString } from '$lib/utils/date';
 import {
 	notificationPermission,
 	playAlarmTone,
@@ -53,6 +54,13 @@ class ReminderStore {
 			window.clearInterval(this.timer);
 			this.timer = null;
 		}
+		// Silence anything currently ringing so a teardown never leaves a tone
+		// or vibration looping in the background.
+		stopAlarmTone();
+		stopVibration();
+		this.ringing = false;
+		this.active = null;
+		this.queue = [];
 	}
 
 	async ensurePermission(): Promise<void> {
@@ -63,16 +71,41 @@ class ReminderStore {
 	tick(): void {
 		if (!browser) return;
 		const now = Date.now();
-		// Populate the queue with anything currently due.
+		// Catch up on *every* occurrence that is due (wide 24h window), so
+		// reminders missed while the tab was suspended are still surfaced.
 		const activities = activityStore.activities;
-		const due = dueOccurrence(activities, now, this.fired);
-		if (due) {
-			this.fired.add(due.key);
+		const due = dueOccurrences(activities, now, this.fired);
+		if (due.length > 0) {
+			for (const occurrence of due) {
+				this.fired.add(occurrence.key);
+				this.enqueue(occurrence);
+			}
+			this.pruneFired(now);
 			saveFired(this.fired);
-			this.enqueue(due);
 		}
 		if (!this.active && this.queue.length > 0) {
 			this.present(this.queue.shift()!);
+		}
+	}
+
+	/**
+	 * Drop fired keys older than ~2 days so the dedupe set does not grow and old
+	 * keys can never mask a genuinely new occurrence.
+	 */
+	private pruneFired(now: number): void {
+		const cutoff = now - 2 * 24 * 60 * 60 * 1000;
+		for (const key of Array.from(this.fired)) {
+			// Keys embed a date ("id@YYYY-MM-DDT HH:MM"); parse the trailing date.
+			const datePart = key.includes('T') ? key.slice(key.lastIndexOf('@') + 1, key.lastIndexOf('@') + 11) : null;
+			if (datePart && /^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+				const ts = new Date(`${datePart}T00:00:00`).getTime();
+				if (Number.isFinite(ts) && ts < cutoff) this.fired.delete(key);
+				continue;
+			}
+			// Snooze keys embed an ISO timestamp; parse it directly.
+			const iso = key.slice(key.lastIndexOf('@') + 1);
+			const ts = Date.parse(iso);
+			if (Number.isFinite(ts) && ts < cutoff) this.fired.delete(key);
 		}
 	}
 
@@ -102,18 +135,28 @@ class ReminderStore {
 		if (!current) return;
 		const mins = minutes ?? current.snoozeMinutes ?? 5;
 		const until = new Date(Date.now() + mins * 60_000).toISOString();
-		this.clearActive();
-		await activityStore.setReminder(current.activityId, {
-			snoozedUntil: until
-		} as Partial<Activity>);
+		// Detach the active alarm without starting the next one yet, so the
+		// persisted write cannot race a new alarm presentation.
+		this.detachActive();
+		try {
+			await activityStore.setReminder(current.activityId, {
+				snoozedUntil: until
+			} as Partial<Activity>);
+		} finally {
+			this.presentNext();
+		}
 	}
 
 	/** "Start now": mark the activity running/completed-ish and dismiss. */
 	async startNow(): Promise<void> {
 		const current = this.active;
 		if (!current) return;
-		this.clearActive();
-		await activityStore.setReminder(current.activityId, { status: 'running' } as Partial<Activity>);
+		this.detachActive();
+		try {
+			await activityStore.setReminder(current.activityId, { status: 'running' } as Partial<Activity>);
+		} finally {
+			this.presentNext();
+		}
 	}
 
 	/** Skip the alarm without touching the activity state. */
@@ -121,14 +164,24 @@ class ReminderStore {
 		this.clearActive();
 	}
 
-	private clearActive(): void {
+	/** Stop the sound/vibration and clear the active alarm (without advancing). */
+	private detachActive(): void {
 		stopAlarmTone();
 		stopVibration();
 		this.ringing = false;
 		this.active = null;
-		if (this.queue.length > 0) {
+	}
+
+	/** Present the next queued alarm, if any. */
+	private presentNext(): void {
+		if (!this.active && this.queue.length > 0) {
 			this.present(this.queue.shift()!);
 		}
+	}
+
+	private clearActive(): void {
+		this.detachActive();
+		this.presentNext();
 	}
 
 	/** Persist new reminder settings for an activity. */

@@ -13,7 +13,7 @@
 
 import type { Activity } from '$lib/types/activity';
 import type { ReminderConfig } from '$lib/types/common';
-import { formatLocalTime, getLocalDateString } from '$lib/utils/date';
+import { addDays, formatLocalTime, getLocalDateString } from '$lib/utils/date';
 
 export interface ReminderOccurrence {
 	/** Stable key so the same occurrence never fires twice. */
@@ -68,6 +68,45 @@ export function resolveReminderTime(activity: Activity): string | null {
 }
 
 /**
+ * Resolve the reminder as a concrete local date + time.
+ *
+ * Unlike {@link resolveReminderTime}, this also reports the *day offset* so a
+ * reminder whose `minutesBefore` crosses midnight is scheduled on the correct
+ * (previous) calendar day instead of silently wrapping onto the same date.
+ */
+export function resolveReminderDateTime(
+	activity: Activity
+): { date: string; time: string; fireAt: number } | null {
+	const reminder = activity.reminder;
+	if (!reminder || !reminder.enabled) return null;
+
+	if (reminder.time) {
+		const fireAt = fireTimestamp(activity.date, reminder.time);
+		if (fireAt === null) return null;
+		return { date: activity.date, time: reminder.time, fireAt };
+	}
+
+	if (activity.startTime && reminder.minutesBefore != null) {
+		const match = /^(\d{1,2}):(\d{2})$/.exec(activity.startTime);
+		if (!match) return null;
+		const startMinutes = Number(match[1]) * 60 + Number(match[2]);
+		const target = startMinutes - Math.max(0, reminder.minutesBefore);
+		// Day offset: how many whole days the target time slid backwards.
+		const dayOffset = Math.floor(target / 1440);
+		const wrapped = ((target % 1440) + 1440) % 1440;
+		const hh = String(Math.floor(wrapped / 60)).padStart(2, '0');
+		const mm = String(wrapped % 60).padStart(2, '0');
+		const date =
+			dayOffset === 0 ? activity.date : addDays(activity.date, dayOffset);
+		const fireAt = fireTimestamp(date, `${hh}:${mm}`);
+		if (fireAt === null) return null;
+		return { date, time: `${hh}:${mm}`, fireAt };
+	}
+
+	return null;
+}
+
+/**
  * Build the list of pending occurrences that should fire between `now` and
  * `now + horizonMs`. Occurrences already snoozed are pushed forward via the
  * activity's `snoozedUntil`.
@@ -117,6 +156,61 @@ export function pendingOccurrences(
 }
 
 /**
+ * All occurrences that are due right now and not already fired, oldest first.
+ *
+ * Uses a wide grace window (default 24h) so occurrences missed while the tab
+ * was suspended, backgrounded or the device slept are still surfaced on the
+ * next tick instead of being silently dropped. The `firedKeys` set guarantees
+ * each occurrence is only emitted once, so a wide window is safe.
+ */
+export function dueOccurrences(
+	activities: Activity[],
+	now: number,
+	firedKeys: Set<string>,
+	graceMs = 24 * 60 * 60 * 1000
+): ReminderOccurrence[] {
+	const due: ReminderOccurrence[] = [];
+	for (const activity of activities) {
+		if (!hasReminder(activity)) continue;
+		if (activity.snoozedUntil) {
+			const snoozeAt = Date.parse(activity.snoozedUntil);
+			if (Number.isFinite(snoozeAt) && snoozeAt <= now && now - snoozeAt <= graceMs) {
+				const key = `${activity.id}@${activity.snoozedUntil}`;
+				if (!firedKeys.has(key)) {
+					due.push({
+						key,
+						activityId: activity.id,
+						activityName: activity.name,
+						date: getLocalDateString(new Date(snoozeAt)),
+						time: formatLocalTime(new Date(snoozeAt)),
+						fireAt: snoozeAt,
+						snoozeMinutes: activity.reminder?.snoozeMinutes ?? 5
+					});
+				}
+			}
+			continue;
+		}
+		const resolved = resolveReminderDateTime(activity);
+		if (!resolved) continue;
+		if (resolved.fireAt <= now && now - resolved.fireAt <= graceMs) {
+			const key = `${activity.id}@${resolved.date}T${resolved.time}`;
+			if (!firedKeys.has(key)) {
+				due.push({
+					key,
+					activityId: activity.id,
+					activityName: activity.name,
+					date: resolved.date,
+					time: resolved.time,
+					fireAt: resolved.fireAt,
+					snoozeMinutes: activity.reminder?.snoozeMinutes ?? 5
+				});
+			}
+		}
+	}
+	return due.sort((a, b) => a.fireAt - b.fireAt);
+}
+
+/**
  * The occurrence that is due right now (within a small grace window) and not
  * already dismissed. Returns the earliest one.
  */
@@ -128,7 +222,6 @@ export function dueOccurrence(
 ): ReminderOccurrence | null {
 	for (const activity of activities) {
 		if (!hasReminder(activity)) continue;
-		const time = resolveReminderTime(activity)!;
 		if (activity.snoozedUntil) {
 			const snoozeAt = Date.parse(activity.snoozedUntil);
 			if (Number.isFinite(snoozeAt) && snoozeAt <= now && now - snoozeAt <= graceMs) {
@@ -147,18 +240,18 @@ export function dueOccurrence(
 			}
 			continue;
 		}
-		const fireAt = fireTimestamp(activity.date, time);
-		if (fireAt === null) continue;
-		if (fireAt <= now && now - fireAt <= graceMs) {
-			const key = `${activity.id}@${activity.date}T${time}`;
+		const resolved = resolveReminderDateTime(activity);
+		if (!resolved) continue;
+		if (resolved.fireAt <= now && now - resolved.fireAt <= graceMs) {
+			const key = `${activity.id}@${resolved.date}T${resolved.time}`;
 			if (!firedKeys.has(key)) {
 				return {
 					key,
 					activityId: activity.id,
 					activityName: activity.name,
-					date: activity.date,
-					time,
-					fireAt,
+					date: resolved.date,
+					time: resolved.time,
+					fireAt: resolved.fireAt,
 					snoozeMinutes: activity.reminder?.snoozeMinutes ?? 5
 				};
 			}

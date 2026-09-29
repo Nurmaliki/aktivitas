@@ -38,24 +38,8 @@ export function isIndexedDBAvailable(): boolean {
 	return typeof window !== 'undefined' && typeof indexedDB !== 'undefined';
 }
 
-export function generateId(): string {
-	const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
-	if (cryptoObj && typeof cryptoObj.randomUUID === 'function') {
-		return cryptoObj.randomUUID();
-	}
-	if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
-		const bytes = cryptoObj.getRandomValues(new Uint8Array(16));
-		bytes[6] = (bytes[6] & 0x0f) | 0x40;
-		bytes[8] = (bytes[8] & 0x3f) | 0x80;
-		const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-		return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-	}
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-		const r = (Math.random() * 16) | 0;
-		const v = c === 'x' ? r : (r & 0x3) | 0x8;
-		return v.toString(16);
-	});
-}
+// Re-export so existing importers (`db.ts`, `subtasks.ts`, tests) keep working.
+export { generateId } from '$lib/utils/id';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -275,6 +259,46 @@ export function waitForTransaction(transaction: IDBTransaction): Promise<void> {
 		transaction.onabort = () =>
 			reject(new DatabaseError('Transaksi database dibatalkan.', transaction.error ?? undefined));
 	});
+}
+
+/**
+ * Run a handler inside a single transaction spanning several object stores.
+ *
+ * All requests the handler issues must be synchronous (or chained from
+ * `onsuccess` callbacks) so the transaction does not auto-commit early. The
+ * promise resolves once the transaction commits, so callers observe the fully
+ * persisted, atomic result — if any request fails the whole transaction is
+ * rolled back by IndexedDB.
+ */
+export async function withMultiStore<T>(
+	mode: IDBTransactionMode,
+	storeNames: StoreName[],
+	handler: (tx: IDBTransaction) => Promise<T> | T
+): Promise<T> {
+	const db = await openDatabase();
+	let transaction: IDBTransaction;
+	try {
+		transaction = db.transaction(storeNames as string[], mode);
+	} catch (error) {
+		throw new DatabaseError('Gagal memulai transaksi database.', error);
+	}
+
+	let result: T;
+	try {
+		result = await handler(transaction);
+	} catch (error) {
+		try {
+			transaction.abort();
+		} catch {
+			/* ignore */
+		}
+		throw error instanceof DatabaseError
+			? error
+			: new DatabaseError('Operasi database gagal.', error);
+	}
+
+	await waitForTransaction(transaction);
+	return result;
 }
 
 export { requestToPromise };

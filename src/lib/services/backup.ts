@@ -13,19 +13,16 @@ import {
 	mergeActivities,
 	mergeStepRecords,
 	putSettings,
-	replaceActivities,
-	replaceStepRecords
+	replaceAllData
 } from '$lib/services/db';
 import {
 	getHabits,
 	getHabitLogs,
-	replaceHabitsAndLogs,
 	mergeHabits,
 	mergeHabitLogs
 } from '$lib/repositories/habitRepository';
 import {
 	getFocusSessions,
-	replaceFocusSessions,
 	mergeFocusSessions
 } from '$lib/repositories/focusRepository';
 
@@ -307,11 +304,16 @@ export async function importData(
 	const focusSessions = backup.focusSessions ?? [];
 
 	if (mode === 'replace') {
-		await replaceActivities(backup.activities);
-		await replaceStepRecords(backup.steps);
-		await replaceHabitsAndLogs(habits, habitLogs);
-		await replaceFocusSessions(focusSessions);
-		if (backup.settings) await putSettings(backup.settings);
+		// Atomic: one transaction across every store, so a failure rolls back
+		// instead of leaving the database half-wiped.
+		await replaceAllData({
+			activities: backup.activities,
+			steps: backup.steps,
+			settings: backup.settings,
+			habits,
+			habitLogs,
+			focusSessions
+		});
 		return {
 			mode,
 			activities: backup.activities.length,
@@ -323,17 +325,17 @@ export async function importData(
 	}
 
 	const addedActivities = await mergeActivities(backup.activities);
-	await mergeStepRecords(backup.steps);
+	const addedSteps = await mergeStepRecords(backup.steps);
 	const addedHabits = await mergeHabits(habits);
 	const addedLogs = await mergeHabitLogs(habitLogs);
-	await mergeFocusSessions(focusSessions);
+	const addedFocus = await mergeFocusSessions(focusSessions);
 	if (backup.settings) await putSettings(backup.settings);
 	return {
 		mode,
 		activities: addedActivities,
-		steps: backup.steps.length,
+		steps: addedSteps,
 		habits: addedHabits,
 		habitLogs: addedLogs,
-		focusSessions: focusSessions.length
+		focusSessions: addedFocus
 	};
 }

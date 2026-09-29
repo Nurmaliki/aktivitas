@@ -13,52 +13,35 @@ import { normalizeActivities, normalizeActivity } from '$lib/utils/migration';
 import type { Habit, HabitLog } from '$lib/types/habit';
 import type { FocusSession } from '$lib/types/focus';
 import { isValidHabit, isValidHabitLog, isValidFocusSession } from '$lib/utils/validators';
+import {
+	DB_NAME,
+	DB_VERSION,
+	STORES,
+	DatabaseError,
+	generateId,
+	isIndexedDBAvailable,
+	openDatabase,
+	requestToPromise,
+	waitForTransaction,
+	withRawStore as withRawStoreShared,
+	withMultiStore,
+	withStore as withStoreShared,
+	type StoreName
+} from '$lib/repositories/db-core';
 
-export const DB_NAME = 'daily-activity-db';
-export const DB_VERSION = 3;
-export const STORE_NAME = 'activities';
-export const STEPS_STORE = 'steps';
-export const SETTINGS_STORE = 'settings';
-export const HABITS_STORE = 'habits';
-export const HABIT_LOGS_STORE = 'habitLogs';
-export const FOCUS_STORE = 'focusSessions';
-export const SYNC_QUEUE_STORE = 'syncQueue';
-export const METADATA_STORE = 'metadata';
+// Re-export the shared primitives so existing importers of `services/db` keep
+// working. `repositories/db-core.ts` is now the single source of truth for the
+// schema, the connection cache and the transaction helpers.
+export { DB_NAME, DB_VERSION, DatabaseError, generateId, isIndexedDBAvailable, openDatabase };
 
-/** Custom error so callers can show friendly, human-readable messages. */
-export class DatabaseError extends Error {
-	constructor(message: string, public readonly cause?: unknown) {
-		super(message);
-		this.name = 'DatabaseError';
-	}
-}
-
-/** True when running in a real browser with IndexedDB available. */
-export function isIndexedDBAvailable(): boolean {
-	return typeof window !== 'undefined' && typeof indexedDB !== 'undefined';
-}
-
-/** Generate a UUID, falling back to a manual implementation for older engines. */
-export function generateId(): string {
-	const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
-	if (cryptoObj && typeof cryptoObj.randomUUID === 'function') {
-		return cryptoObj.randomUUID();
-	}
-	// RFC4122 v4 fallback using getRandomValues when available.
-	if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
-		const bytes = cryptoObj.getRandomValues(new Uint8Array(16));
-		bytes[6] = (bytes[6] & 0x0f) | 0x40;
-		bytes[8] = (bytes[8] & 0x3f) | 0x80;
-		const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-		return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-	}
-	// Last resort (non-cryptographic) so the app still functions.
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-		const r = (Math.random() * 16) | 0;
-		const v = c === 'x' ? r : (r & 0x3) | 0x8;
-		return v.toString(16);
-	});
-}
+export const STORE_NAME = STORES.activities;
+export const STEPS_STORE = STORES.steps;
+export const SETTINGS_STORE = STORES.settings;
+export const HABITS_STORE = STORES.habits;
+export const HABIT_LOGS_STORE = STORES.habitLogs;
+export const FOCUS_STORE = STORES.focusSessions;
+export const SYNC_QUEUE_STORE = STORES.syncQueue;
+export const METADATA_STORE = STORES.metadata;
 
 /** Clamp a step goal into the allowed range, falling back to the default. */
 export function clampStepGoal(value: number): number {
@@ -82,229 +65,27 @@ export function isValidStepRecord(value: unknown): value is StepRecord {
 	return true;
 }
 
-let dbPromise: Promise<IDBDatabase> | null = null;
-
-/** Add an index only when it does not already exist (idempotent upgrade). */
-function addIndexIfMissing(store: IDBObjectStore, name: string, keyPath: string | string[]): void {
-	if (!store.indexNames.contains(name)) {
-		store.createIndex(name, keyPath, { unique: false });
-	}
-}
-
 /**
- * Open (and lazily cache) the IndexedDB connection.
- * Rejects with a DatabaseError when IndexedDB is unavailable or fails to open.
+ * Activity-scoped wrappers over the shared transaction helpers.
+ *
+ * The original `db.ts` defaulted the store name to `activities`; the shared
+ * primitives in `repositories/db-core.ts` take it explicitly. These local
+ * wrappers preserve the historical call sites without a default parameter.
  */
-export function openDatabase(): Promise<IDBDatabase> {
-	if (!isIndexedDBAvailable()) {
-		return Promise.reject(
-			new DatabaseError('Penyimpanan browser (IndexedDB) tidak tersedia di lingkungan ini.')
-		);
-	}
-	if (dbPromise) return dbPromise;
-
-	dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
-		let request: IDBOpenDBRequest;
-		try {
-			request = indexedDB.open(DB_NAME, DB_VERSION);
-		} catch (error) {
-			reject(new DatabaseError('Gagal membuka database browser.', error));
-			return;
-		}
-
-		request.onupgradeneeded = (event) => {
-			const db = request.result;
-			const oldVersion = (event as IDBVersionChangeEvent).oldVersion;
-
-			// --- v1: activities ---
-			if (!db.objectStoreNames.contains(STORE_NAME)) {
-				const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-				store.createIndex('date', 'date', { unique: false });
-				store.createIndex('category', 'category', { unique: false });
-				store.createIndex('completed', 'completed', { unique: false });
-				store.createIndex('createdAt', 'createdAt', { unique: false });
-			} else if (oldVersion < 3) {
-				// Upgrade path: add v3 indexes to an existing activities store.
-				const store = request.transaction!.objectStore(STORE_NAME);
-				addIndexIfMissing(store, 'status', 'status');
-				addIndexIfMissing(store, 'habitId', 'habitId');
-				addIndexIfMissing(store, 'updatedAt', 'updatedAt');
-			}
-
-			// --- v2: steps + settings ---
-			if (!db.objectStoreNames.contains(STEPS_STORE)) {
-				const stepStore = db.createObjectStore(STEPS_STORE, { keyPath: 'date' });
-				stepStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-			}
-			if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
-				db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
-			}
-
-			// --- v3: habits, habit logs, focus sessions, sync queue, metadata ---
-			if (!db.objectStoreNames.contains(HABITS_STORE)) {
-				const habitStore = db.createObjectStore(HABITS_STORE, { keyPath: 'id' });
-				habitStore.createIndex('active', 'active', { unique: false });
-				habitStore.createIndex('categoryId', 'categoryId', { unique: false });
-				habitStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-			}
-			if (!db.objectStoreNames.contains(HABIT_LOGS_STORE)) {
-				const logStore = db.createObjectStore(HABIT_LOGS_STORE, { keyPath: 'id' });
-				logStore.createIndex('habitId', 'habitId', { unique: false });
-				logStore.createIndex('date', 'date', { unique: false });
-				// A habit has at most one log per date; enforce with a compound index.
-				logStore.createIndex('habitId_date', ['habitId', 'date'], { unique: true });
-			}
-			if (!db.objectStoreNames.contains(FOCUS_STORE)) {
-				const focusStore = db.createObjectStore(FOCUS_STORE, { keyPath: 'id' });
-				focusStore.createIndex('activityId', 'activityId', { unique: false });
-				focusStore.createIndex('startedAt', 'startedAt', { unique: false });
-				focusStore.createIndex('status', 'status', { unique: false });
-			}
-			if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
-				const queueStore = db.createObjectStore(SYNC_QUEUE_STORE, {
-					keyPath: 'id',
-					autoIncrement: true
-				});
-				queueStore.createIndex('entity', 'entity', { unique: false });
-				queueStore.createIndex('createdAt', 'createdAt', { unique: false });
-			}
-			if (!db.objectStoreNames.contains(METADATA_STORE)) {
-				db.createObjectStore(METADATA_STORE, { keyPath: 'key' });
-			}
-		};
-
-		request.onsuccess = () => {
-			const db = request.result;
-			// If the connection is closed (e.g. version change elsewhere), reset cache.
-			db.onclose = () => {
-				dbPromise = null;
-			};
-			resolve(db);
-		};
-
-		request.onerror = () => {
-			dbPromise = null;
-			reject(new DatabaseError('Gagal membuka database aktivitas.', request.error));
-		};
-
-		request.onblocked = () => {
-			// Another tab holds an older connection open; the upgrade is waiting.
-			dbPromise = null;
-			reject(
-				new DatabaseError(
-					'Database sedang digunakan oleh tab lain. Tutup tab lain lalu coba lagi.'
-				)
-			);
-		};
-	}).catch((error) => {
-		dbPromise = null;
-		throw error instanceof DatabaseError
-			? error
-			: new DatabaseError('Terjadi kesalahan pada database browser.', error);
-	});
-
-	return dbPromise;
-}
-
-/** Wrap an IDBRequest into a promise with consistent error handling. */
-function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
-	return new Promise<T>((resolve, reject) => {
-		request.onsuccess = () => resolve(request.result);
-		request.onerror = () =>
-			reject(
-				new DatabaseError(
-					`Operasi database gagal${request.error ? `: ${request.error.name}` : ''}.`,
-					request.error
-				)
-			);
-	});
-}
-
-async function withStore<T>(
+function withStore<T>(
 	mode: IDBTransactionMode,
 	handler: (store: IDBObjectStore) => Promise<T> | T,
-	storeName: string = STORE_NAME
+	storeName: StoreName = STORES.activities
 ): Promise<T> {
-	const db = await openDatabase();
-	return new Promise<T>((resolve, reject) => {
-		let transaction: IDBTransaction;
-		try {
-			transaction = db.transaction(storeName, mode);
-		} catch (error) {
-			reject(new DatabaseError('Gagal memulai transaksi database.', error));
-			return;
-		}
-
-		const store = transaction.objectStore(storeName);
-		let result: T;
-
-		Promise.resolve(handler(store))
-			.then((value) => {
-				result = value;
-			})
-			.catch((error) => {
-				try {
-					transaction.abort();
-				} catch {
-					// ignore abort errors
-				}
-				reject(error instanceof DatabaseError ? error : new DatabaseError('Operasi database gagal.', error));
-			});
-
-		transaction.oncomplete = () => resolve(result);
-		transaction.onerror = () =>
-			reject(new DatabaseError('Transaksi database gagal.', transaction.error));
-		transaction.onabort = () =>
-			reject(
-				new DatabaseError('Transaksi database dibatalkan.', transaction.error ?? undefined)
-			);
-	});
+	return withStoreShared(mode, handler, storeName);
 }
 
-/** Resolve when a transaction completes; reject on error/abort. */
-function waitForTransaction(transaction: IDBTransaction): Promise<void> {
-	return new Promise<void>((resolve, reject) => {
-		transaction.oncomplete = () => resolve();
-		transaction.onerror = () =>
-			reject(new DatabaseError('Transaksi database gagal.', transaction.error));
-		transaction.onabort = () =>
-			reject(
-				new DatabaseError('Transaksi database dibatalkan.', transaction.error ?? undefined)
-			);
-	});
-}
-
-/**
- * Low-level transaction helper for operations that issue several requests.
- * The handler receives the store and the live transaction and is responsible
- * for issuing its requests synchronously (so the transaction does not commit
- * early) and resolving when the work is done.
- */
-async function withRawStore<T>(
+function withRawStore<T>(
 	mode: IDBTransactionMode,
 	handler: (store: IDBObjectStore, transaction: IDBTransaction) => Promise<T>,
-	storeName: string = STORE_NAME
+	storeName: StoreName = STORES.activities
 ): Promise<T> {
-	const db = await openDatabase();
-	let transaction: IDBTransaction;
-	try {
-		transaction = db.transaction(storeName, mode);
-	} catch (error) {
-		throw new DatabaseError('Gagal memulai transaksi database.', error);
-	}
-	const store = transaction.objectStore(storeName);
-	try {
-		return await handler(store, transaction);
-	} catch (error) {
-		try {
-			transaction.abort();
-		} catch {
-			// ignore
-		}
-		throw error instanceof DatabaseError
-			? error
-			: new DatabaseError('Operasi database gagal.', error);
-	}
+	return withRawStoreShared(mode, handler, storeName);
 }
 
 /** Read every activity, normalizing (and filtering out malformed) records. */
@@ -402,7 +183,8 @@ export function upsertActivity(activity: Activity): Promise<void> {
 }
 
 /** Delete a single activity. */
-export function deleteActivity(id: string): Promise<void> {	return withStore('readwrite', async (store) => {
+export function deleteActivity(id: string): Promise<void> {
+	return withStore('readwrite', async (store) => {
 		await requestToPromise(store.delete(id));
 	});
 }
@@ -440,7 +222,7 @@ export function replaceActivities(activities: Activity[]): Promise<void> {
 export function mergeActivities(activities: Activity[]): Promise<number> {
 	return withRawStore('readwrite', (store, transaction) => {
 		let added = 0;
-		return new Promise<number>((resolve) => {
+		return new Promise<number>((resolve, reject) => {
 			const keysRequest = store.getAllKeys();
 			keysRequest.onsuccess = () => {
 				const existing = new Set(keysRequest.result.map((key) => String(key)));
@@ -454,9 +236,7 @@ export function mergeActivities(activities: Activity[]): Promise<number> {
 				// fully-persisted state.
 				transaction.oncomplete = () => resolve(added);
 			};
-			keysRequest.onerror = () => {
-				transaction.oncomplete = () => resolve(added);
-			};
+			keysRequest.onerror = () => reject(new DatabaseError('Gagal membaca data aktivitas.', keysRequest.error));
 		});
 	});
 }
@@ -546,35 +326,30 @@ export function mergeStepRecords(records: StepRecord[]): Promise<number> {
 		'readwrite',
 		(store, transaction) => {
 			let added = 0;
-			return new Promise<number>((resolve) => {
-				const keysRequest = store.getAllKeys();
-				keysRequest.onsuccess = () => {
+			return new Promise<number>((resolve, reject) => {
+				// A single getAll() keeps the transaction alive across one request
+				// only (no cross-task chaining), avoiding a premature auto-commit.
+				const allRequest = store.getAll();
+				allRequest.onsuccess = () => {
 					const byDate = new Map<string, StepRecord>();
-					const allRequest = store.getAll();
-					allRequest.onsuccess = () => {
-						for (const value of allRequest.result as unknown[]) {
-							if (isValidStepRecord(value)) byDate.set(value.date, value);
+					for (const value of allRequest.result as unknown[]) {
+						if (isValidStepRecord(value)) byDate.set(value.date, value);
+					}
+					for (const record of records) {
+						const existing = byDate.get(record.date);
+						if (!existing) {
+							store.put(record);
+							byDate.set(record.date, record);
+							added += 1;
+						} else if (record.steps > existing.steps) {
+							store.put(record);
+							byDate.set(record.date, record);
 						}
-						for (const record of records) {
-							const existing = byDate.get(record.date);
-							if (!existing) {
-								store.put(record);
-								byDate.set(record.date, record);
-								added += 1;
-							} else if (record.steps > existing.steps) {
-								store.put(record);
-								byDate.set(record.date, record);
-							}
-						}
-						transaction.oncomplete = () => resolve(added);
-					};
-					allRequest.onerror = () => {
-						transaction.oncomplete = () => resolve(added);
-					};
-				};
-				keysRequest.onerror = () => {
+					}
 					transaction.oncomplete = () => resolve(added);
 				};
+				allRequest.onerror = () =>
+					reject(new DatabaseError('Gagal membaca data langkah.', allRequest.error));
 			});
 		},
 		STEPS_STORE
@@ -620,4 +395,66 @@ export function putSettings(settings: AppSettings): Promise<AppSettings> {
 		},
 		SETTINGS_STORE
 	);
+}
+
+// ---------------------------------------------------------------------------
+// Atomic whole-database import (v3)
+// ---------------------------------------------------------------------------
+
+export interface ReplaceDataPayload {
+	activities: Activity[];
+	steps: StepRecord[];
+	settings?: AppSettings;
+	habits: Habit[];
+	habitLogs: HabitLog[];
+	focusSessions: FocusSession[];
+}
+
+/**
+ * Replace *all* data across every store in a single IndexedDB transaction.
+ *
+ * Unlike calling `replaceActivities` + `replaceStepRecords` + … in sequence
+ * (which commits store-by-store and can leave a half-wiped database if one step
+ * throws), this is atomic: if any write fails the whole transaction aborts and
+ * IndexedDB rolls back to the previous state.
+ */
+export function replaceAllData(payload: ReplaceDataPayload): Promise<void> {
+	const stores = [
+		STORES.activities,
+		STORES.steps,
+		STORES.settings,
+		STORES.habits,
+		STORES.habitLogs,
+		STORES.focusSessions
+	];
+	return withMultiStore('readwrite', stores, async (tx) => {
+		const activities = tx.objectStore(STORES.activities);
+		const steps = tx.objectStore(STORES.steps);
+		const settings = tx.objectStore(STORES.settings);
+		const habits = tx.objectStore(STORES.habits);
+		const habitLogs = tx.objectStore(STORES.habitLogs);
+		const focus = tx.objectStore(STORES.focusSessions);
+
+		// Issue every request synchronously in one task so the transaction does
+		// not auto-commit between calls.
+		activities.clear();
+		for (const activity of payload.activities) activities.put(activity);
+
+		steps.clear();
+		for (const record of payload.steps) steps.put(record);
+
+		settings.clear();
+		if (payload.settings) {
+			settings.put({ key: 'stepGoal', value: clampStepGoal(payload.settings.stepGoal) });
+		}
+
+		habits.clear();
+		for (const habit of payload.habits) habits.put(habit);
+
+		habitLogs.clear();
+		for (const log of payload.habitLogs) habitLogs.put(log);
+
+		focus.clear();
+		for (const session of payload.focusSessions) focus.put(session);
+	});
 }

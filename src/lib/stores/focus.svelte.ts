@@ -31,6 +31,8 @@ class FocusStore {
 
 	private loadPromise: Promise<void> | null = null;
 	private ticker: number | null = null;
+	/** Guards advancePhase against re-entrancy (finish awaits, tick can fire). */
+	private advancing = false;
 
 	async init(force = false): Promise<void> {
 		if (!browser || typeof indexedDB === 'undefined') {
@@ -200,17 +202,23 @@ class FocusStore {
 
 	/** Move to the next phase automatically (called when a phase completes). */
 	async advancePhase(): Promise<void> {
+		if (this.advancing) return;
 		const completed = this.current;
 		if (!completed) return;
-		// Count completed focus sessions *before* finishing this one.
-		const focusCount = this.focusCount();
-		const phase = nextPhase(
-			completed.phase,
-			completed.phase === 'focus' ? focusCount + 1 : focusCount,
-			this.settings
-		);
-		await this.finish();
-		await this.start(phase, completed.activityId, completed.activityName);
+		this.advancing = true;
+		try {
+			// Count completed focus sessions *before* finishing this one.
+			const focusCount = this.focusCount();
+			const phase = nextPhase(
+				completed.phase,
+				completed.phase === 'focus' ? focusCount + 1 : focusCount,
+				this.settings
+			);
+			await this.finish();
+			await this.start(phase, completed.activityId, completed.activityName);
+		} finally {
+			this.advancing = false;
+		}
 	}
 
 	updateSettings(changes: Partial<PomodoroSettings>): void {

@@ -16,6 +16,9 @@ class NetworkStore {
 
 	private started = false;
 	private registration: ServiceWorkerRegistration | null = null;
+	private handleControllerChange = () => {
+		this.swReady = true;
+	};
 
 	init(): void {
 		if (!browser || this.started) return;
@@ -45,9 +48,7 @@ class NetworkStore {
 			this.registration = registration;
 
 			if (navigator.serviceWorker.controller) this.swReady = true;
-			navigator.serviceWorker.addEventListener('controllerchange', () => {
-				this.swReady = true;
-			});
+			navigator.serviceWorker.addEventListener('controllerchange', this.handleControllerChange);
 
 			if (registration.waiting) this.updateAvailable = true;
 			registration.addEventListener('updatefound', () => {
@@ -73,11 +74,9 @@ class NetworkStore {
 		}
 		waiting.postMessage('SKIP_WAITING');
 		if (browser) {
-			navigator.serviceWorker.addEventListener(
-				'controllerchange',
-				() => location.reload(),
-				{ once: true }
-			);
+			navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), {
+				once: true
+			});
 		}
 	}
 
@@ -85,6 +84,14 @@ class NetworkStore {
 		if (!browser) return;
 		window.removeEventListener('online', this.handleOnline);
 		window.removeEventListener('offline', this.handleOffline);
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.removeEventListener(
+				'controllerchange',
+				this.handleControllerChange
+			);
+		}
+		// Allow a subsequent init() to re-register the listeners.
+		this.started = false;
 	}
 }
 
