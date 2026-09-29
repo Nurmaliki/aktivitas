@@ -144,6 +144,13 @@ main {
 	min-width: 0;
 }
 
+/* Reserve space for the fixed mobile bottom navigation bar. */
+@media (max-width: 899px) {
+	main {
+		padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+	}
+}
+
 .page {
 	padding: var(--space-6) 0 var(--space-10);
 	display: flex;

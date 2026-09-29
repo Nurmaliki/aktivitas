@@ -159,6 +159,7 @@ src/
 │   │   ├── NetworkStatus.svelte                     # Indikator online/offline + update SW
 │   │   ├── SyncStatus.svelte                        # Status sinkronisasi
 │   │   ├── Navbar.svelte / ConfirmDialog.svelte
+│   │   ├── NavIcon.svelte                # Ikon SVG inline (menu/drawer)
 │   ├── repositories/                                # Akses IndexedDB (per-domain)
 │   │   ├── db-core.ts                # Primitif bersama (open, withStore, generateId)
 │   │   ├── habitRepository.ts        # Habits + habitLogs (soft-delete)
@@ -177,6 +178,7 @@ src/
 │   │   ├── activity / steps / habit / focus / reminder / network / sync
 │   ├── types/                        # Model & konstanta
 │   │   ├── activity.ts  common.ts  habit.ts  focus.ts  steps.ts  sync.ts
+│   ├── navigation.ts                 # Konfigurasi navigasi (top/bottom/drawer)
 │   └── utils/                        # Logika murni + unit test berdekatan
 │       ├── date / statistics / stepStatistics / validation / validators
 │       ├── migration / subtasks / planner / calendar / focus / habits
@@ -392,6 +394,22 @@ dibatasi maksimum 200.000/hari. Baris tidak valid dilewati dan dilaporkan.
 - Audit otomatis (8 rute × 4 viewport: 320/375/768/1280) menjalankan aplikasi
   produksi di browser sungguhan dan memverifikasi **0 error konsol**, **0 overflow**,
   alt/label lengkap, dan smoke test CRUD + persistensi IndexedDB.
+
+### Navigasi responsif
+
+- **Desktop (≥ 900px)** — navigasi utama berupa deretan link di top bar.
+- **Mobile/tablet (< 900px)** — dua pola sekaligus:
+  - **Bottom navigation bar** (fixed) berisi 4 rute utama
+    (Dashboard, Planner, Kalender, Fokus) + tombol **Lainnya**; item aktif
+    ditandai pill gradien. Aman terhadap *safe-area* perangkat.
+  - **Drawer** yang dibuka lewat **hamburger** (kanan atas) atau tombol
+    **Lainnya**, memuat menu **lengkap** dengan ikon. Menutup dengan tombol
+    tutup, klik backdrop, tombol Esc, atau setelah berpindah rute.
+- Konfigurasi navigasi tunggal di `$lib/navigation.ts` (dipakai bersama oleh
+  top bar, bottom bar, dan drawer) sehingga rute tidak pernah berbeda antar layout.
+- A11y: drawer memakai `role="dialog"` + `aria-modal`, fokus dipindah ke drawer
+  saat terbuka, `inert` saat tertutup, `aria-current="page"` pada item aktif, dan
+  label `aria-*` pada tombol ikon.
 
 ## Tema & Desain — Claymorphism
 
