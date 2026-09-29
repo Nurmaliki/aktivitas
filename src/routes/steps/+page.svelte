@@ -604,6 +604,7 @@
 		type="file"
 		accept=".csv,.json,application/json,text/csv"
 		class="sr-only"
+		aria-label="Impor data langkah dari file CSV atau JSON"
 		onchange={handleFileSelected}
 	/>
 	<p class="muted text-sm disclaim">

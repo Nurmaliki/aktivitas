@@ -418,6 +418,7 @@
 				type="file"
 				accept="application/json,.json"
 				class="file-input"
+				aria-label="Impor data dari file backup JSON"
 				onchange={handleFileSelected}
 			/>
 		</div>
