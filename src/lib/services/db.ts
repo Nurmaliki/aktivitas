@@ -389,6 +389,18 @@ export function patchActivity(id: string, changes: Partial<Activity>): Promise<A
 	});
 }
 
+/**
+ * Force-write an activity, overwriting any existing record with the same id.
+ * Used by the sync engine when a remote change wins the conflict resolution.
+ */
+export function upsertActivity(activity: Activity): Promise<void> {
+	if (!isValidActivity(activity)) return Promise.resolve();
+	const normalized = normalizeActivity(activity);
+	return withStore('readwrite', async (store) => {
+		await requestToPromise(store.put(normalized));
+	});
+}
+
 /** Delete a single activity. */
 export function deleteActivity(id: string): Promise<void> {	return withStore('readwrite', async (store) => {
 		await requestToPromise(store.delete(id));

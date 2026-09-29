@@ -135,3 +135,15 @@ export function mergeFocusSessions(sessions: FocusSession[]): Promise<number> {
 		STORES.focusSessions
 	);
 }
+
+/** Force-write a focus session (sync pull). Invalid records are ignored. */
+export function upsertFocusSession(session: FocusSession): Promise<void> {
+	if (!isValidFocusSession(session)) return Promise.resolve();
+	return withStore(
+		'readwrite',
+		async (store) => {
+			await requestToPromise(store.put(session));
+		},
+		STORES.focusSessions
+	);
+}

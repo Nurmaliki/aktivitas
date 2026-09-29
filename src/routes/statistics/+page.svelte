@@ -14,6 +14,7 @@
 	import StepsChart from '$lib/components/StepsChart.svelte';
 	import AnalyticsPanel from '$lib/components/AnalyticsPanel.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import SyncStatus from '$lib/components/SyncStatus.svelte';
 
 	let today = $state('');
 	onMount(() => {
@@ -426,6 +427,8 @@
 			<strong>mengganti</strong> data yang ada.
 		</p>
 	</section>
+
+	<SyncStatus />
 </div>
 
 <!-- Step 1: choose the import mode after a valid file is selected. -->

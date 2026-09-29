@@ -9,6 +9,7 @@
 	import { reminderStore } from '$lib/stores/reminder.svelte.js';
 	import { habitStore } from '$lib/stores/habit.svelte.js';
 	import { networkStore } from '$lib/stores/network.svelte.js';
+	import { syncStore } from '$lib/stores/sync.svelte.js';
 
 	let { children } = $props();
 
@@ -19,6 +20,7 @@
 		habitStore.init();
 		reminderStore.start();
 		networkStore.init();
+		syncStore.init();
 		return () => {
 			reminderStore.stop();
 			networkStore.destroy();

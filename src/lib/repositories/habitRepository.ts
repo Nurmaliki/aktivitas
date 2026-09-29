@@ -254,8 +254,7 @@ export function mergeHabits(habits: Habit[]): Promise<number> {
 }
 
 /** Merge habit logs by (habitId,date), skipping duplicates. Returns count added. */
-export function mergeHabitLogs(logs: HabitLog[]): Promise<number> {
-	return withRawStore(
+export function mergeHabitLogs(logs: HabitLog[]): Promise<number> {	return withRawStore(
 		'readwrite',
 		(store, transaction) =>
 			new Promise<number>((resolve) => {
@@ -279,6 +278,33 @@ export function mergeHabitLogs(logs: HabitLog[]): Promise<number> {
 				};
 				allReq.onerror = () => resolve(0);
 			}),
+		STORES.habitLogs
+	);
+}
+
+/**
+ * Force-write a habit, overwriting any existing record with the same id.
+ * Used by the sync engine when a remote change wins the conflict.
+ */
+export function upsertHabit(habit: Habit): Promise<void> {
+	if (!isValidHabit(habit)) return Promise.resolve();
+	return withStore(
+		'readwrite',
+		async (store) => {
+			await requestToPromise(store.put(habit));
+		},
+		STORES.habits
+	);
+}
+
+/** Force-write a habit log (sync pull). Invalid records are ignored. */
+export function upsertHabitLog(log: HabitLog): Promise<void> {
+	if (!isValidHabitLog(log)) return Promise.resolve();
+	return withStore(
+		'readwrite',
+		async (store) => {
+			await requestToPromise(store.put(log));
+		},
 		STORES.habitLogs
 	);
 }

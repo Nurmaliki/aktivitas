@@ -123,6 +123,18 @@ export function startOfLocalDay(date: Date = new Date()): Date {
 	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+/**
+ * Format an ISO timestamp as a short local date+time (e.g. "5 Mar 2024, 09:30").
+ * Returns an empty string for invalid input.
+ */
+export function formatLocalDateTime(iso: string): string {
+	const date = new Date(iso);
+	if (Number.isNaN(date.getTime())) return '';
+	const day = date.getDate();
+	const month = MONTH_NAMES[date.getMonth()];
+	return `${day} ${month} ${date.getFullYear()}, ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 /** Short weekday label (Sen/Sel/...) for a local YYYY-MM-DD string. */
 export function getWeekdayShort(dateString: string): string {
 	const date = parseLocalDate(dateString);
