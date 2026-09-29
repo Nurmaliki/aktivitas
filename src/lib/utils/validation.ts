@@ -10,6 +10,16 @@ import {
 } from '$lib/types/activity';
 import { isValidDateString } from '$lib/utils/date';
 
+/** Validate a local time string in "HH:MM" (00:00–23:59). */
+export function isValidTimeString(value: unknown): boolean {
+	if (typeof value !== 'string') return false;
+	const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+	if (!match) return false;
+	const hh = Number(match[1]);
+	const mm = Number(match[2]);
+	return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+}
+
 /** Strip control characters and collapse surrounding whitespace. */
 export function sanitizeText(value: unknown, maxLength: number): string {
 	if (typeof value !== 'string') return '';
@@ -90,6 +100,9 @@ export function isActivityCategory(value: unknown): value is ActivityCategory {
 /**
  * Validate an unknown value as an Activity record.
  * Used both when reading from IndexedDB and when restoring a backup.
+ *
+ * Only the core (v1) fields are required; v3 scheduling fields are optional and
+ * normalized separately.
  */
 export function isValidActivity(value: unknown): value is Activity {
 	if (typeof value !== 'object' || value === null) return false;
@@ -104,6 +117,11 @@ export function isValidActivity(value: unknown): value is Activity {
 	if (typeof record.completed !== 'boolean') return false;
 	if (typeof record.createdAt !== 'string' || record.createdAt.length === 0) return false;
 	if (typeof record.updatedAt !== 'string' || record.updatedAt.length === 0) return false;
+
+	// Optional v3 fields, when present, must be well-typed.
+	if (record.subtasks != null && !Array.isArray(record.subtasks)) return false;
+	if (record.startTime != null && !isValidTimeString(record.startTime)) return false;
+	if (record.endTime != null && !isValidTimeString(record.endTime)) return false;
 
 	return true;
 }

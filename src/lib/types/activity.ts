@@ -1,4 +1,12 @@
 import type { AppSettings, StepRecord } from '$lib/types/steps';
+import type {
+	ActivityStatus,
+	Priority,
+	RecurrenceRule,
+	ReminderConfig,
+	Subtask,
+	SyncMetadata
+} from '$lib/types/common';
 
 export type ActivityCategory =
 	| 'Development'
@@ -17,20 +25,55 @@ export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
 	'Other'
 ];
 
+/**
+ * Activity record.
+ *
+ * v3 added scheduling/focus fields. Every new field is optional so that legacy
+ * records (v1/v2: only id/name/category/date/duration/completed/timestamps)
+ * remain valid. The normalization layer fills sensible defaults on read.
+ */
 export interface Activity {
 	id: string;
 	name: string;
 	description?: string;
 	category: ActivityCategory;
+	/** Optional explicit category id (mirrors `category` for forward-compat). */
+	categoryId?: string;
 	/** Local date string in YYYY-MM-DD format */
 	date: string;
-	/** Duration in minutes */
+	/** Duration in minutes (legacy field; kept for backward compatibility). */
 	duration: number;
+	/** v3: planned duration. Defaults to `duration` when absent. */
+	plannedDuration?: number;
+	/** v3: actual focused/worked duration in minutes. */
+	actualDuration?: number;
+	/** v3: local start time "HH:MM". */
+	startTime?: string;
+	/** v3: local end time "HH:MM". */
+	endTime?: string;
 	completed: boolean;
+	/** v3: lifecycle status. Derived from `completed` when absent. */
+	status?: ActivityStatus;
+	/** v3: priority. */
+	priority?: Priority;
+	/** v3: reminder configuration. */
+	reminder?: ReminderConfig;
+	/** v3: recurrence rule. */
+	recurrence?: RecurrenceRule;
+	/** v3: checklist. Defaults to [] when absent. */
+	subtasks?: Subtask[];
+	/** v3: link to a habit. */
+	habitId?: string;
 	/** ISO timestamp */
 	createdAt: string;
 	/** ISO timestamp */
 	updatedAt: string;
+	/** v3: ISO timestamp when completed. */
+	completedAt?: string;
+	/** v3: last snooze ISO timestamp. */
+	snoozedUntil?: string;
+	/** v3: sync bookkeeping. */
+	syncMeta?: SyncMetadata;
 }
 
 /** Payload used when creating a new activity (id/timestamps are generated). */
@@ -41,6 +84,16 @@ export interface ActivityInput {
 	date: string;
 	duration: number;
 	completed: boolean;
+	/** v3 optional scheduling fields. */
+	startTime?: string;
+	endTime?: string;
+	plannedDuration?: number;
+	priority?: Priority;
+	status?: ActivityStatus;
+	reminder?: ReminderConfig;
+	recurrence?: RecurrenceRule;
+	subtasks?: Subtask[];
+	habitId?: string;
 }
 
 /** Result of a validation pass over an activity input. */

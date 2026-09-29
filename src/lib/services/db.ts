@@ -9,12 +9,21 @@ import {
 	type StepSource
 } from '$lib/types/steps';
 import { isValidActivity } from '$lib/utils/validation';
+import { normalizeActivities, normalizeActivity } from '$lib/utils/migration';
+import type { Habit, HabitLog } from '$lib/types/habit';
+import type { FocusSession } from '$lib/types/focus';
+import { isValidHabit, isValidHabitLog, isValidFocusSession } from '$lib/utils/validators';
 
 export const DB_NAME = 'daily-activity-db';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 export const STORE_NAME = 'activities';
 export const STEPS_STORE = 'steps';
 export const SETTINGS_STORE = 'settings';
+export const HABITS_STORE = 'habits';
+export const HABIT_LOGS_STORE = 'habitLogs';
+export const FOCUS_STORE = 'focusSessions';
+export const SYNC_QUEUE_STORE = 'syncQueue';
+export const METADATA_STORE = 'metadata';
 
 /** Custom error so callers can show friendly, human-readable messages. */
 export class DatabaseError extends Error {
@@ -75,6 +84,13 @@ export function isValidStepRecord(value: unknown): value is StepRecord {
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+/** Add an index only when it does not already exist (idempotent upgrade). */
+function addIndexIfMissing(store: IDBObjectStore, name: string, keyPath: string | string[]): void {
+	if (!store.indexNames.contains(name)) {
+		store.createIndex(name, keyPath, { unique: false });
+	}
+}
+
 /**
  * Open (and lazily cache) the IndexedDB connection.
  * Rejects with a DatabaseError when IndexedDB is unavailable or fails to open.
@@ -96,22 +112,64 @@ export function openDatabase(): Promise<IDBDatabase> {
 			return;
 		}
 
-		request.onupgradeneeded = () => {
+		request.onupgradeneeded = (event) => {
 			const db = request.result;
+			const oldVersion = (event as IDBVersionChangeEvent).oldVersion;
+
+			// --- v1: activities ---
 			if (!db.objectStoreNames.contains(STORE_NAME)) {
 				const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
 				store.createIndex('date', 'date', { unique: false });
 				store.createIndex('category', 'category', { unique: false });
 				store.createIndex('completed', 'completed', { unique: false });
 				store.createIndex('createdAt', 'createdAt', { unique: false });
+			} else if (oldVersion < 3) {
+				// Upgrade path: add v3 indexes to an existing activities store.
+				const store = request.transaction!.objectStore(STORE_NAME);
+				addIndexIfMissing(store, 'status', 'status');
+				addIndexIfMissing(store, 'habitId', 'habitId');
+				addIndexIfMissing(store, 'updatedAt', 'updatedAt');
 			}
-			// v2: step counter stores.
+
+			// --- v2: steps + settings ---
 			if (!db.objectStoreNames.contains(STEPS_STORE)) {
 				const stepStore = db.createObjectStore(STEPS_STORE, { keyPath: 'date' });
 				stepStore.createIndex('updatedAt', 'updatedAt', { unique: false });
 			}
 			if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
 				db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
+			}
+
+			// --- v3: habits, habit logs, focus sessions, sync queue, metadata ---
+			if (!db.objectStoreNames.contains(HABITS_STORE)) {
+				const habitStore = db.createObjectStore(HABITS_STORE, { keyPath: 'id' });
+				habitStore.createIndex('active', 'active', { unique: false });
+				habitStore.createIndex('categoryId', 'categoryId', { unique: false });
+				habitStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+			}
+			if (!db.objectStoreNames.contains(HABIT_LOGS_STORE)) {
+				const logStore = db.createObjectStore(HABIT_LOGS_STORE, { keyPath: 'id' });
+				logStore.createIndex('habitId', 'habitId', { unique: false });
+				logStore.createIndex('date', 'date', { unique: false });
+				// A habit has at most one log per date; enforce with a compound index.
+				logStore.createIndex('habitId_date', ['habitId', 'date'], { unique: true });
+			}
+			if (!db.objectStoreNames.contains(FOCUS_STORE)) {
+				const focusStore = db.createObjectStore(FOCUS_STORE, { keyPath: 'id' });
+				focusStore.createIndex('activityId', 'activityId', { unique: false });
+				focusStore.createIndex('startedAt', 'startedAt', { unique: false });
+				focusStore.createIndex('status', 'status', { unique: false });
+			}
+			if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
+				const queueStore = db.createObjectStore(SYNC_QUEUE_STORE, {
+					keyPath: 'id',
+					autoIncrement: true
+				});
+				queueStore.createIndex('entity', 'entity', { unique: false });
+				queueStore.createIndex('createdAt', 'createdAt', { unique: false });
+			}
+			if (!db.objectStoreNames.contains(METADATA_STORE)) {
+				db.createObjectStore(METADATA_STORE, { keyPath: 'key' });
 			}
 		};
 
@@ -249,11 +307,11 @@ async function withRawStore<T>(
 	}
 }
 
-/** Read every activity, filtering out malformed records. */
+/** Read every activity, normalizing (and filtering out malformed) records. */
 export function getActivities(): Promise<Activity[]> {
 	return withStore('readonly', async (store) => {
 		const raw = await requestToPromise(store.getAll());
-		return raw.filter(isValidActivity);
+		return normalizeActivities(raw.filter(isValidActivity));
 	});
 }
 
@@ -261,7 +319,7 @@ export function getActivities(): Promise<Activity[]> {
 export function getActivity(id: string): Promise<Activity | undefined> {
 	return withStore('readonly', async (store) => {
 		const raw = await requestToPromise<unknown>(store.get(id));
-		return isValidActivity(raw) ? raw : undefined;
+		return isValidActivity(raw) ? normalizeActivity(raw) : undefined;
 	});
 }
 
