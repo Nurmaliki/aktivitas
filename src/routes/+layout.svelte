@@ -6,6 +6,7 @@
 	import { activityStore } from '$lib/stores/activity.svelte.js';
 	import { stepStore } from '$lib/stores/steps.svelte.js';
 	import { reminderStore } from '$lib/stores/reminder.svelte.js';
+	import { habitStore } from '$lib/stores/habit.svelte.js';
 
 	let { children } = $props();
 
@@ -13,6 +14,7 @@
 	$effect(() => {
 		activityStore.init();
 		stepStore.init();
+		habitStore.init();
 		reminderStore.start();
 		return () => reminderStore.stop();
 	});
