@@ -161,6 +161,10 @@
 		</button>
 	</div>
 
+	<p class="card-link-row">
+		<a class="text-link" href="/steps">Buka halaman Langkah →</a>
+	</p>
+
 	<div class="step-summary">
 		<div class="step-big">
 			<span class="step-count">{todaySteps.toLocaleString('id-ID')}</span>
@@ -341,5 +345,15 @@
 
 	.step-disclaimer {
 		margin-top: var(--space-4);
+	}
+
+	.card-link-row {
+		margin-top: var(--space-3);
+	}
+
+	.text-link {
+		color: var(--color-primary);
+		font-weight: 600;
+		font-size: 0.9rem;
 	}
 </style>

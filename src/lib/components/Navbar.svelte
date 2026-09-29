@@ -4,6 +4,7 @@
 	const links = [
 		{ href: '/', label: 'Dashboard' },
 		{ href: '/history', label: 'Riwayat' },
+		{ href: '/steps', label: 'Langkah' },
 		{ href: '/statistics', label: 'Statistik' }
 	];
 
