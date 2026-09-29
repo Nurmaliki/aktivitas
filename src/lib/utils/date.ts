@@ -64,8 +64,7 @@ export function isValidDateString(dateString: string): boolean {
 }
 
 /** Add `days` (can be negative) to a local YYYY-MM-DD string. */
-export function addDays(dateString: string, days: number): string {
-	const date = parseLocalDate(dateString);
+export function addDays(dateString: string, days: number): string {	const date = parseLocalDate(dateString);
 	if (!date) return dateString;
 	date.setDate(date.getDate() + days);
 	return getLocalDateString(date);
@@ -112,6 +111,16 @@ export function getMonthDates(dateString: string): string[] {
 export function getMonthStart(dateString: string): string {
 	const date = parseLocalDate(dateString) ?? new Date();
 	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-01`;
+}
+
+/** Format a Date as local "HH:MM". */
+export function formatLocalTime(date: Date = new Date()): string {
+	return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** Start of the local day for a Date (00:00:00.000). */
+export function startOfLocalDay(date: Date = new Date()): Date {
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 /** Short weekday label (Sen/Sel/...) for a local YYYY-MM-DD string. */

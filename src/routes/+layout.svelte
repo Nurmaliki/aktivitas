@@ -2,8 +2,10 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import Navbar from '$lib/components/Navbar.svelte';
+	import AlarmScreen from '$lib/components/AlarmScreen.svelte';
 	import { activityStore } from '$lib/stores/activity.svelte.js';
 	import { stepStore } from '$lib/stores/steps.svelte.js';
+	import { reminderStore } from '$lib/stores/reminder.svelte.js';
 
 	let { children } = $props();
 
@@ -11,6 +13,8 @@
 	$effect(() => {
 		activityStore.init();
 		stepStore.init();
+		reminderStore.start();
+		return () => reminderStore.stop();
 	});
 </script>
 
@@ -24,3 +28,5 @@
 		{@render children()}
 	</main>
 </div>
+
+<AlarmScreen />

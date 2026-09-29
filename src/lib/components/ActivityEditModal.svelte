@@ -9,7 +9,9 @@
 	} from '$lib/types/activity';
 	import { validateActivityInput, normalizeInput } from '$lib/utils/validation';
 	import type { Subtask } from '$lib/types/common';
+	import type { ReminderConfig } from '$lib/types/common';
 	import SubtaskList from '$lib/components/SubtaskList.svelte';
+	import ReminderSettings from '$lib/components/ReminderSettings.svelte';
 
 	interface Props {
 		activity: Activity | null;
@@ -30,6 +32,7 @@
 	let duration = $state(30);
 	let completed = $state(false);
 	let subtasks = $state<Subtask[]>([]);
+	let reminder = $state<ReminderConfig | undefined>(undefined);
 	let errors = $state<Record<string, string>>({});
 
 	// Re-seed the form whenever the modal opens with a (new) activity.
@@ -42,6 +45,7 @@
 			duration = activity.duration;
 			completed = activity.completed;
 			subtasks = activity.subtasks ? [...activity.subtasks] : [];
+			reminder = activity.reminder ? { ...activity.reminder } : undefined;
 			errors = {};
 		}
 	});
@@ -66,7 +70,7 @@
 		}
 		errors = {};
 
-		const input = normalizeInput({ ...raw, completed, subtasks });
+		const input = normalizeInput({ ...raw, completed, subtasks, reminder });
 		const ok = await onSave(activity.id, input);
 		if (ok) onClose();
 	}
@@ -171,6 +175,11 @@
 				/>
 			</div>
 
+			<div class="modal-reminder">
+				<h3 class="modal-section-title">Pengingat</h3>
+				<ReminderSettings value={reminder} disabled={saving} onChange={(next) => (reminder = next)} />
+			</div>
+
 			<footer class="modal-actions">
 				<button type="button" class="btn btn-secondary" onclick={onClose} disabled={saving}>
 					Batal
@@ -234,5 +243,16 @@
 	.modal-subtasks {
 		border-top: 1px solid var(--color-border);
 		padding-top: var(--space-4);
+	}
+
+	.modal-reminder {
+		border-top: 1px solid var(--color-border);
+		padding-top: var(--space-4);
+	}
+
+	.modal-section-title {
+		font-size: 0.95rem;
+		font-weight: 700;
+		margin-bottom: var(--space-2);
 	}
 </style>

@@ -135,8 +135,23 @@ class ActivityStore {
 		}
 	}
 
-	/** Replace the checklist of an activity (used by the inline list UI). */
-	async updateSubtasks(id: string, subtasks: import('$lib/types/common').Subtask[]): Promise<void> {
+	/**
+	 * Patch non-`ActivityInput` fields (reminder, snoozedUntil, status, etc.)
+	 * directly on a stored activity. Used by the reminder/alarm engine.
+	 */
+	async setReminder(id: string, changes: Partial<Activity>): Promise<void> {
+		this.error = null;
+		try {
+			const updated = await db.patchActivity(id, $state.snapshot(changes) as Partial<Activity>);
+			this.activities = this.sort(
+				this.activities.map((activity) => (activity.id === id ? updated : activity))
+			);
+		} catch (error) {
+			this.setError(error, 'Gagal memperbarui pengingat.');
+		}
+	}
+
+	/** Replace the checklist of an activity (used by the inline list UI). */	async updateSubtasks(id: string, subtasks: import('$lib/types/common').Subtask[]): Promise<void> {
 		this.saving = true;
 		this.error = null;
 		try {

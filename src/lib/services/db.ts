@@ -366,9 +366,31 @@ export function updateActivity(
 	});
 }
 
-/** Delete a single activity. */
-export function deleteActivity(id: string): Promise<void> {
+/**
+ * Patch arbitrary fields on a stored activity (bypasses ActivityInput typing).
+ * Used for reminder/snooze/status updates that are not part of the create form.
+ */
+export function patchActivity(id: string, changes: Partial<Activity>): Promise<Activity> {
 	return withStore('readwrite', async (store) => {
+		const raw = await requestToPromise<unknown>(store.get(id));
+		if (!isValidActivity(raw)) {
+			throw new DatabaseError('Aktivitas tidak ditemukan.');
+		}
+		const merged: Activity = {
+			...raw,
+			...changes,
+			id: raw.id,
+			createdAt: raw.createdAt,
+			updatedAt: new Date().toISOString()
+		};
+		const updated = normalizeActivity(merged);
+		await requestToPromise(store.put(updated));
+		return updated;
+	});
+}
+
+/** Delete a single activity. */
+export function deleteActivity(id: string): Promise<void> {	return withStore('readwrite', async (store) => {
 		await requestToPromise(store.delete(id));
 	});
 }
