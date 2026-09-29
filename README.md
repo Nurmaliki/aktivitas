@@ -422,8 +422,8 @@ menggembung. Karakteristiknya diimplementasikan lewat design token di `app.css`:
   sehingga terlihat seperti clay yang dipadatkan (`--shadow-clay*`).
 - **Inset clay** untuk elemen "tertekan" seperti input, track progress, dan track
   grafik (`--shadow-clay-inset`).
-- **Palet pastel lilac/blue** — latar lavender lembut, kartu lilac, primer
-  indigo/violet dengan gradien halus.
+- **Palet pastel sky/sea blue** — latar biru langit lembut, kartu biru muda, primer
+  biru langit dengan gradien halus.
 - **Tipografi Nunito** — font membulat yang serasi dengan bentuk clay.
 - **Balanced** — efek jelas terasa 3D namun tetap bersih dan mudah dibaca.
 

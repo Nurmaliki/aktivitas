@@ -141,7 +141,7 @@
 
 	.has-data .day-bar {
 		background-color: var(--color-primary);
-		background-image: linear-gradient(180deg, #9385f6, #6f5cec);
+		background-image: linear-gradient(180deg, #6bb3f0, #3d92e2);
 	}
 
 	.selected .day-bar {

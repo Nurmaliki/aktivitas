@@ -247,7 +247,7 @@
 		height: 2rem;
 		border-radius: var(--radius-md);
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
+		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		color: #fff;
 		font-size: 1rem;
 		box-shadow: var(--shadow-clay-sm);
@@ -292,7 +292,7 @@
 
 	.nav-link.active {
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
+		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		color: #fff;
 		box-shadow: var(--shadow-clay-sm);
 	}
@@ -326,7 +326,7 @@
 	.drawer-backdrop {
 		position: fixed;
 		inset: 0;
-		background-color: rgba(94, 82, 160, 0.4);
+		background-color: rgba(48, 96, 150, 0.4);
 		backdrop-filter: blur(2px);
 		z-index: 40;
 		animation: fade-in 0.18s ease;
@@ -417,7 +417,7 @@
 
 	.drawer-link.active {
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
+		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		color: #fff;
 		box-shadow: var(--shadow-clay-sm);
 	}
@@ -508,7 +508,7 @@
 
 	.bottom-link.active .bottom-icon {
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
+		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		color: #fff;
 		box-shadow: var(--shadow-clay-sm);
 	}

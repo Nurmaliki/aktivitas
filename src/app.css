@@ -1,30 +1,30 @@
 :root {
 	/* -----------------------------------------------------------------------
-	   Claymorphism theme — soft pastel lilac/blue, puffy 3D "clay" surfaces.
+	   Claymorphism theme — soft pastel sky/sea blue, puffy 3D "clay" surfaces.
 	   Balanced intensity: clearly 3D but still clean for a productivity app.
 	   ----------------------------------------------------------------------- */
 
 	/* Palette */
-	--color-bg: #ece9fb; /* soft pastel lilac */
-	--color-bg-tint: #e4e0fa;
-	--color-surface: #f4f2fe; /* puffy clay card */
-	--color-surface-alt: #e9e5fb;
-	--color-surface-raised: #f8f7ff;
-	--color-border: #ddd7f5;
-	--color-border-strong: #cdc4ee;
-	--color-text: #363151;
-	--color-text-muted: #6b6590;
-	--color-text-subtle: #928cb4;
+	--color-bg: #e6f0fc; /* soft pastel sky blue */
+	--color-bg-tint: #dcebfa;
+	--color-surface: #f2f8fe; /* puffy clay card */
+	--color-surface-alt: #e2eefb;
+	--color-surface-raised: #f7fbff;
+	--color-border: #d4e5f7;
+	--color-border-strong: #c0d8f0;
+	--color-text: #28374d;
+	--color-text-muted: #5f7899;
+	--color-text-subtle: #8aa2bd;
 
-	--color-primary: #7c6cf0; /* soft indigo/violet */
-	--color-primary-hover: #6a58ea;
-	--color-primary-soft: #e6e1fd;
+	--color-primary: #4a9de8; /* soft sky blue */
+	--color-primary-hover: #368de0;
+	--color-primary-soft: #dceafb;
 	--color-primary-contrast: #ffffff;
-	--color-success: #5cc9a7;
-	--color-success-soft: #d8f5ec;
+	--color-success: #4fc3a1;
+	--color-success-soft: #d6f4ea;
 	--color-warning: #f0b24e;
 	--color-warning-soft: #fdeecf;
-	--color-danger: #f0708f;
+	--color-danger: #ef6f8d;
 	--color-danger-soft: #fde1e8;
 	--color-danger-hover: #e75b7e;
 
@@ -42,8 +42,8 @@
 	   `--clay-*` variables let individual surfaces tune the tint.
 	   ----------------------------------------------------------------------- */
 	--clay-highlight: rgba(255, 255, 255, 0.9);
-	--clay-shade: rgba(124, 108, 240, 0.28);
-	--clay-shadow-color: rgba(124, 108, 240, 0.28);
+	--clay-shade: rgba(74, 157, 232, 0.28);
+	--clay-shadow-color: rgba(74, 157, 232, 0.28);
 
 	--shadow-clay-sm:
 		0 6px 14px -6px var(--clay-shadow-color),
@@ -98,7 +98,7 @@ body {
 	background-color: var(--color-bg);
 	background-image:
 		radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.75), transparent 42%),
-		radial-gradient(circle at 88% 4%, rgba(124, 108, 240, 0.12), transparent 46%);
+		radial-gradient(circle at 88% 4%, rgba(74, 157, 232, 0.12), transparent 46%);
 	background-attachment: fixed;
 	color: var(--color-text);
 	font-family: var(--font-sans);
@@ -213,14 +213,14 @@ a.btn:hover {
 
 .btn-primary {
 	background-color: var(--color-primary);
-	background-image: linear-gradient(145deg, #8f81f5, #6f5cec);
+	background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 	color: var(--color-primary-contrast);
 	box-shadow: var(--shadow-clay-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
 	background-color: var(--color-primary-hover);
-	background-image: linear-gradient(145deg, #8a7bf3, #6350e8);
+	background-image: linear-gradient(145deg, #5fa9ef, #368de0);
 }
 
 .btn-secondary {
@@ -319,7 +319,7 @@ a.btn:hover {
 	background-color: var(--color-surface-raised);
 	box-shadow:
 		var(--shadow-clay-inset),
-		0 0 0 3px rgba(124, 108, 240, 0.28);
+		0 0 0 3px rgba(74, 157, 232, 0.28);
 }
 
 .field textarea {
@@ -388,8 +388,8 @@ a.btn:hover {
 
 .alert-info {
 	background-color: var(--color-primary-soft);
-	color: #4f3fc4;
-	border-color: #cfc6fb;
+	color: #24608f;
+	border-color: #bcdcf8;
 }
 
 /* ---------- Badges ---------- */

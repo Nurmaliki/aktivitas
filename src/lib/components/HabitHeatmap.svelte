@@ -82,16 +82,16 @@
 		box-shadow: var(--shadow-clay-inset);
 	}
 	.level-1 {
-		background-color: #d8d2f8;
+		background-color: #cfe6fa;
 	}
 	.level-2 {
-		background-color: #b3a8f3;
+		background-color: #9dcdf3;
 	}
 	.level-3 {
-		background-color: #8f81f5;
+		background-color: #6bb3f0;
 	}
 	.level-4 {
-		background-color: #6f5cec;
+		background-color: #3d92e2;
 	}
 
 	.heat-legend {

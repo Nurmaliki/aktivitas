@@ -37,7 +37,7 @@
 
 	.net-banner.update {
 		background-color: var(--color-primary-soft);
-		color: #503fc6;
+		color: #20639b;
 		box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.06);
 	}
 

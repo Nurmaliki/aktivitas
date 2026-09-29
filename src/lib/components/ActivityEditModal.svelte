@@ -207,7 +207,7 @@
 	}
 
 	.modal::backdrop {
-		background-color: rgba(94, 82, 160, 0.4);
+		background-color: rgba(48, 96, 150, 0.4);
 		backdrop-filter: blur(2px);
 	}
 

@@ -73,7 +73,7 @@
 	.progress-fill {
 		height: 100%;
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #9385f6, #6f5cec);
+		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		border-radius: var(--radius-full);
 		transition: width 0.3s ease;
 		box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.12), inset 0 3px 5px rgba(255, 255, 255, 0.4);

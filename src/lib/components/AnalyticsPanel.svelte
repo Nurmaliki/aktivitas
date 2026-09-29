@@ -339,10 +339,10 @@
 	}
 
 	.bar.planned {
-		background-color: #c3b8fa;
+		background-color: #a9d2f2;
 	}
 	.bar.actual {
-		background-color: #6f5cec;
+		background-color: #3d92e2;
 	}
 	.bar.focus {
 		background-color: #5cc9a7;
@@ -370,10 +370,10 @@
 	}
 
 	.swatch.planned {
-		background-color: #c3b8fa;
+		background-color: #a9d2f2;
 	}
 	.swatch.actual {
-		background-color: #6f5cec;
+		background-color: #3d92e2;
 	}
 
 	.category-list,
@@ -406,7 +406,7 @@
 		display: block;
 		height: 100%;
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #9385f6, #6f5cec);
+		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		border-radius: 999px;
 	}
 

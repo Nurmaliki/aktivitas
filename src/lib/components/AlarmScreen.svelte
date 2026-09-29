@@ -65,7 +65,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: linear-gradient(160deg, #8f81f5 0%, #6f5cec 60%, #5a48d6 100%);
+		background: linear-gradient(160deg, #6bb3f0 0%, #3d92e2 60%, #2f7fce 100%);
 		color: #fff;
 		padding: var(--space-6);
 		text-align: center;

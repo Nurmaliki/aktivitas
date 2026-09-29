@@ -139,7 +139,7 @@
 	.bar-fill {
 		width: 100%;
 		background-color: var(--color-primary);
-		background-image: linear-gradient(180deg, #9385f6, #6f5cec);
+		background-image: linear-gradient(180deg, #6bb3f0, #3d92e2);
 		border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 		transition: height 0.3s ease;
 	}

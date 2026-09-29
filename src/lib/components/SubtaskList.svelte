@@ -211,7 +211,7 @@
 		display: block;
 		height: 100%;
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #9385f6, #6f5cec);
+		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		transition: width 0.2s ease;
 	}
 
