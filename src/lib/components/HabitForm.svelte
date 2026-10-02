@@ -181,10 +181,9 @@
 
 	.days-fieldset {
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 		padding: var(--space-3);
 		background-color: var(--color-surface-alt);
-		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.days-fieldset legend {
@@ -204,19 +203,18 @@
 		align-items: center;
 		gap: 4px;
 		font-size: 0.85rem;
-		font-weight: 600;
+		font-weight: 500;
 		padding: 3px 10px;
-		border: 1px solid transparent;
+		border: 1px solid var(--color-border-strong);
 		border-radius: var(--radius-full);
 		background-color: var(--color-surface);
-		box-shadow: var(--shadow-clay-sm);
 		cursor: pointer;
 	}
 
 	.day-check.checked {
 		background-color: var(--color-primary);
 		color: #fff;
-		border-color: transparent;
+		border-color: var(--color-primary);
 	}
 
 	@media (max-width: 560px) {

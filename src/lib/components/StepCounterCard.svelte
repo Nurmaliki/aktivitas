@@ -297,10 +297,9 @@
 		width: 2.75rem;
 		height: 2.75rem;
 		flex-shrink: 0;
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 		background-color: var(--color-primary-soft);
 		color: var(--color-primary);
-		box-shadow: var(--shadow-clay-sm);
 	}
 
 	.step-summary {
@@ -322,7 +321,9 @@
 		font-size: 2.25rem;
 		font-weight: 700;
 		line-height: 1;
+		letter-spacing: -0.02em;
 		color: var(--color-primary);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.step-unit {

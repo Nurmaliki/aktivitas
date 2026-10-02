@@ -273,9 +273,9 @@
 		gap: var(--space-3);
 		text-align: center;
 		padding: var(--space-8) var(--space-4);
-		background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+		background: #0f172a;
 		color: #fff;
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-card);
 	}
 
 	.focus-phase {
@@ -345,9 +345,9 @@
 		align-items: center;
 		gap: var(--space-3);
 		background-color: var(--color-surface);
-		border: none;
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-clay);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-card);
+		box-shadow: none;
 		padding: var(--space-4) var(--space-5);
 	}
 
@@ -358,10 +358,9 @@
 		width: 2.75rem;
 		height: 2.75rem;
 		flex-shrink: 0;
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 		background-color: var(--color-primary-soft);
 		color: var(--color-primary);
-		box-shadow: var(--shadow-clay-sm);
 	}
 
 	.mini-body {
@@ -373,13 +372,15 @@
 
 	.mini-value {
 		font-size: 1.5rem;
-		font-weight: 800;
+		font-weight: 700;
 		line-height: 1.1;
+		letter-spacing: -0.02em;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.mini-label {
 		font-size: 0.82rem;
-		color: var(--color-text-muted);
+		color: var(--color-text-subtle);
 	}
 
 	.start-row {
@@ -393,7 +394,7 @@
 	.start-row select {
 		padding: 0.4rem 0.6rem;
 		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border);
+		border: 1px solid var(--color-border-strong);
 		background-color: var(--color-surface);
 		color: var(--color-text);
 	}

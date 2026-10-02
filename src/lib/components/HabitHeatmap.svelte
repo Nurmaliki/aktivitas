@@ -72,26 +72,25 @@
 	.heat-cell {
 		width: 13px;
 		height: 13px;
-		border-radius: var(--radius-lg);
+		border-radius: 3px;
 		background-color: var(--color-surface-alt);
 		flex-shrink: 0;
 	}
 
 	.level-0 {
 		background-color: var(--color-surface-alt);
-		box-shadow: var(--shadow-clay-inset);
 	}
 	.level-1 {
-		background-color: #cfe6fa;
+		background-color: #bae6fd;
 	}
 	.level-2 {
-		background-color: #9dcdf3;
+		background-color: #7dd3fc;
 	}
 	.level-3 {
-		background-color: #6bb3f0;
+		background-color: #38bdf8;
 	}
 	.level-4 {
-		background-color: #3d92e2;
+		background-color: #0284c7;
 	}
 
 	.heat-legend {

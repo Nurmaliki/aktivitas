@@ -74,18 +74,18 @@
 
 <style>
 	.confirm-dialog {
-		border: none;
+		border: 1px solid var(--color-border);
 		border-radius: var(--radius-xl);
 		padding: 0;
 		max-width: 26rem;
 		width: calc(100% - 2rem);
 		background-color: var(--color-surface);
-		box-shadow: var(--shadow-clay-lg);
+		box-shadow: var(--shadow-lg);
 		color: var(--color-text);
 	}
 
 	.confirm-dialog::backdrop {
-		background-color: rgba(48, 96, 150, 0.4);
+		background-color: rgba(15, 23, 42, 0.45);
 		backdrop-filter: blur(2px);
 	}
 

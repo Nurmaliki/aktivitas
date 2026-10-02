@@ -213,9 +213,10 @@
 <style>
 	/* ---------- Top bar ---------- */
 	.navbar {
-		background-color: var(--color-surface);
-		border-bottom: none;
-		box-shadow: 0 12px 26px -18px var(--clay-shadow-color);
+		background-color: rgba(255, 255, 255, 0.92);
+		border-bottom: 1px solid var(--color-border);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
 		position: sticky;
 		top: 0;
 		z-index: 20;
@@ -226,7 +227,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-4);
-		height: 4rem;
+		height: 3.5rem;
 	}
 
 	.brand {
@@ -235,7 +236,7 @@
 		gap: var(--space-2);
 		text-decoration: none;
 		color: var(--color-text);
-		font-weight: 900;
+		font-weight: 700;
 		flex-shrink: 0;
 	}
 
@@ -247,14 +248,13 @@
 		height: 2rem;
 		border-radius: var(--radius-md);
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		color: #fff;
 		font-size: 1rem;
-		box-shadow: var(--shadow-clay-sm);
 	}
 
 	.brand-name {
-		font-size: 1.05rem;
+		font-size: 0.95rem;
+		letter-spacing: -0.01em;
 	}
 
 	/* ---------- Desktop nav ---------- */
@@ -272,17 +272,16 @@
 
 	.nav-link {
 		display: inline-block;
-		padding: 0.45rem 0.85rem;
-		border-radius: var(--radius-lg);
+		padding: 0.4rem 0.75rem;
+		border-radius: var(--radius-md);
 		text-decoration: none;
 		color: var(--color-text-muted);
-		font-size: 0.9rem;
-		font-weight: 700;
+		font-size: 0.85rem;
+		font-weight: 500;
 		white-space: nowrap;
 		transition:
 			background-color 0.15s ease,
-			color 0.15s ease,
-			box-shadow 0.15s ease;
+			color 0.15s ease;
 	}
 
 	.nav-link:hover {
@@ -291,10 +290,9 @@
 	}
 
 	.nav-link.active {
-		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
-		color: #fff;
-		box-shadow: var(--shadow-clay-sm);
+		background-color: var(--color-primary-soft);
+		color: #075985;
+		font-weight: 600;
 	}
 
 	/* ---------- Hamburger ---------- */
@@ -303,30 +301,29 @@
 		flex-direction: column;
 		justify-content: center;
 		gap: 5px;
-		width: 2.75rem;
-		height: 2.75rem;
-		padding: 0.6rem;
-		border: none;
+		width: 2.5rem;
+		height: 2.5rem;
+		padding: 0.55rem;
+		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background-color: var(--color-surface-alt);
-		box-shadow: var(--shadow-clay-sm);
+		background-color: var(--color-surface);
 		cursor: pointer;
 		flex-shrink: 0;
 	}
 
 	.hamburger-line {
 		display: block;
-		height: 2.5px;
+		height: 2px;
 		width: 100%;
 		border-radius: var(--radius-full);
-		background-color: var(--color-text);
+		background-color: var(--color-text-muted);
 	}
 
 	/* ---------- Drawer ---------- */
 	.drawer-backdrop {
 		position: fixed;
 		inset: 0;
-		background-color: rgba(48, 96, 150, 0.4);
+		background-color: rgba(15, 23, 42, 0.45);
 		backdrop-filter: blur(2px);
 		z-index: 40;
 		animation: fade-in 0.18s ease;
@@ -348,8 +345,8 @@
 		height: 100dvh;
 		width: min(20rem, 82vw);
 		background-color: var(--color-surface);
-		box-shadow: var(--shadow-clay-lg);
-		border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+		border-left: 1px solid var(--color-border);
+		box-shadow: var(--shadow-lg);
 		z-index: 50;
 		padding: var(--space-4);
 		overflow-y: auto;
@@ -372,8 +369,8 @@
 	}
 
 	.drawer-title {
-		font-size: 1.05rem;
-		font-weight: 900;
+		font-size: 1rem;
+		font-weight: 700;
 	}
 
 	.drawer-close {
@@ -382,12 +379,15 @@
 		justify-content: center;
 		width: 2.25rem;
 		height: 2.25rem;
-		border: none;
-		border-radius: var(--radius-full);
-		background-color: var(--color-surface-alt);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background-color: var(--color-surface);
 		color: var(--color-text-muted);
-		box-shadow: var(--shadow-clay-sm);
 		cursor: pointer;
+	}
+
+	.drawer-close:hover {
+		background-color: var(--color-surface-alt);
 	}
 
 	.drawer-list {
@@ -396,19 +396,22 @@
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-2);
+		gap: var(--space-1);
 	}
 
 	.drawer-link {
 		display: flex;
 		align-items: center;
 		gap: var(--space-3);
-		padding: 0.7rem 0.9rem;
+		padding: 0.6rem 0.7rem;
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		color: var(--color-text);
-		font-weight: 700;
-		transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+		font-weight: 500;
+		font-size: 0.925rem;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease;
 	}
 
 	.drawer-link:hover {
@@ -416,27 +419,26 @@
 	}
 
 	.drawer-link.active {
-		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
-		color: #fff;
-		box-shadow: var(--shadow-clay-sm);
+		background-color: var(--color-primary-soft);
+		color: #075985;
+		font-weight: 600;
 	}
 
 	.drawer-link-icon {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2.1rem;
-		height: 2.1rem;
-		border-radius: var(--radius-sm);
+		width: 2rem;
+		height: 2rem;
+		border-radius: var(--radius-md);
 		background-color: var(--color-surface-alt);
-		color: var(--color-primary);
+		color: var(--color-text-muted);
 		flex-shrink: 0;
 	}
 
 	.drawer-link.active .drawer-link-icon {
-		background-color: rgba(255, 255, 255, 0.2);
-		color: #fff;
+		background-color: rgba(2, 132, 199, 0.14);
+		color: var(--color-primary);
 	}
 
 	/* ---------- Bottom nav ---------- */
@@ -447,9 +449,10 @@
 		right: 0;
 		bottom: 0;
 		z-index: 30;
-		background-color: var(--color-surface);
-		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-		box-shadow: 0 -10px 26px -16px var(--clay-shadow-color);
+		background-color: rgba(255, 255, 255, 0.96);
+		border-top: 1px solid var(--color-border);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
 		padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
 	}
 
@@ -475,7 +478,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: 2px;
-		padding: 0.4rem 0.2rem;
+		padding: 0.35rem 0.2rem;
 		border: none;
 		background: none;
 		border-radius: var(--radius-md);
@@ -483,22 +486,26 @@
 		color: var(--color-text-subtle);
 		font: inherit;
 		cursor: pointer;
-		transition: color 0.15s ease, background-color 0.15s ease;
+		transition:
+			color 0.15s ease,
+			background-color 0.15s ease;
 	}
 
 	.bottom-icon {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2.6rem;
-		height: 1.9rem;
+		width: 2.4rem;
+		height: 1.75rem;
 		border-radius: var(--radius-full);
-		transition: background-color 0.15s ease, box-shadow 0.15s ease;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease;
 	}
 
 	.bottom-label {
 		font-size: 0.65rem;
-		font-weight: 800;
+		font-weight: 500;
 		letter-spacing: 0.01em;
 	}
 
@@ -506,11 +513,13 @@
 		color: var(--color-primary);
 	}
 
+	.bottom-link.active .bottom-label {
+		font-weight: 600;
+	}
+
 	.bottom-link.active .bottom-icon {
-		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
-		color: #fff;
-		box-shadow: var(--shadow-clay-sm);
+		background-color: var(--color-primary-soft);
+		color: var(--color-primary);
 	}
 
 	/* ---------- Responsive switches ---------- */
@@ -528,13 +537,13 @@
 		}
 
 		.navbar-inner {
-			height: 3.5rem;
+			height: 3.25rem;
 		}
 	}
 
 	@media (max-width: 420px) {
 		.brand-name {
-			font-size: 0.95rem;
+			font-size: 0.9rem;
 		}
 
 		.bottom-label {

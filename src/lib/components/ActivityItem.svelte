@@ -195,7 +195,6 @@
 		padding: var(--space-2) var(--space-3);
 		background-color: var(--color-surface-alt);
 		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.activity-item.completed .meta-status {
@@ -221,31 +220,37 @@
 	.category-development {
 		background-color: #e0e7ff;
 		color: #3730a3;
+		border-color: #c7d2fe;
 	}
 
 	.category-meeting {
 		background-color: #fef3c7;
 		color: #92400e;
+		border-color: #fde68a;
 	}
 
 	.category-learning {
 		background-color: #dbeafe;
 		color: #1e40af;
+		border-color: #bfdbfe;
 	}
 
 	.category-exercise {
 		background-color: #dcfce7;
 		color: #166534;
+		border-color: #bbf7d0;
 	}
 
 	.category-personal {
 		background-color: #fae8ff;
 		color: #86198f;
+		border-color: #f5d0fe;
 	}
 
 	.category-other {
 		background-color: #e2e8f0;
 		color: #334155;
+		border-color: #cbd5e1;
 	}
 
 	@media (max-width: 480px) {

@@ -408,7 +408,7 @@ dibatasi maksimum 200.000/hari. Baris tidak valid dilewati dan dilaporkan.
 - **Mobile/tablet (< 900px)** — dua pola sekaligus:
   - **Bottom navigation bar** (fixed) berisi 4 rute utama
     (Dashboard, Planner, Kalender, Fokus) + tombol **Lainnya**; item aktif
-    ditandai pill gradien. Aman terhadap *safe-area* perangkat.
+    ditandai pill biru lembut. Aman terhadap *safe-area* perangkat.
   - **Drawer** yang dibuka lewat **hamburger** (kanan atas) atau tombol
     **Lainnya**, memuat menu **lengkap** dengan ikon. Menutup dengan tombol
     tutup, klik backdrop, tombol Esc, atau setelah berpindah rute.
@@ -418,21 +418,23 @@ dibatasi maksimum 200.000/hari. Baris tidak valid dilewati dan dilaporkan.
   saat terbuka, `inert` saat tertutup, `aria-current="page"` pada item aktif, dan
   label `aria-*` pada tombol ikon.
 
-## Tema & Desain — Claymorphism
+## Tema & Desain — Flat / Minimal Dashboard
 
-Antarmuka memakai gaya **Claymorphism**: permukaan "tanah liat" 3D yang lembut dan
-menggembung. Karakteristiknya diimplementasikan lewat design token di `app.css`:
+Antarmuka memakai gaya **flat / minimal dashboard**: permukaan bersih berbasis
+border, tanpa bayangan skeuomorphic. Karakteristiknya diimplementasikan lewat
+design token di `app.css`:
 
-- **Radii besar** — sudut membulat (`--radius-sm` 12px s/d `--radius-xl` 34px, tombol pill).
-- **Clay shadow** — resep bayangan bertanda tangan: *outer drop shadow* halus +
-  *inner highlight* dari kiri-atas (sumber cahaya) + *inner shade* ke kanan-bawah,
-  sehingga terlihat seperti clay yang dipadatkan (`--shadow-clay*`).
-- **Inset clay** untuk elemen "tertekan" seperti input, track progress, dan track
-  grafik (`--shadow-clay-inset`).
-- **Palet pastel sky/sea blue** — latar biru langit lembut, kartu biru muda, primer
-  biru langit dengan gradien halus.
-- **Tipografi Nunito** — font membulat yang serasi dengan bentuk clay.
-- **Balanced** — efek jelas terasa 3D namun tetap bersih dan mudah dibaca.
+- **Radii kecil** — sudut rapi (`--radius-sm` 6px s/d `--radius-xl` 14px, pill untuk
+  tombol/badge). Kartu memakai `--radius-card` (14px).
+- **Border 1px** — kartu, header, dan tabel didefinisikan oleh garis `--color-border`
+  (slate-200), bukan bayangan. `--shadow-*` sangat halus dan hanya dipakai untuk
+  overlay (modal/drawer).
+- **Palet slate netral** — latar `#f8fafc` (slate-50), kartu putih, teks slate-900,
+  aksen **sky blue** `#0284c7` dengan state aktif lembut (`--color-primary-soft`).
+- **Tipografi Inter** — font sans-serif netral dengan angka `tabular-nums` pada
+  metrik.
+- **Status warna** — success emerald, warning amber, danger red, masing-masing
+  dengan varian `-soft` untuk badge/alert.
 
 Semua komponen mengambil warna/bentuk/bayangan dari token, sehingga tema dapat
 disesuaikan dari satu tempat (`src/app.css`). Mode terang saja untuk saat ini.

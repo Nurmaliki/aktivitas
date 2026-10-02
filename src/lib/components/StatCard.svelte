@@ -20,9 +20,9 @@
 <style>
 	.stat-card {
 		background-color: var(--color-surface);
-		border: none;
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-clay);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-card);
+		box-shadow: none;
 		padding: var(--space-4) var(--space-5);
 		display: flex;
 		flex-direction: column;
@@ -32,18 +32,20 @@
 	}
 
 	.stat-label {
-		font-size: 0.78rem;
-		font-weight: 800;
-		color: var(--color-text-muted);
+		font-size: 0.72rem;
+		font-weight: 600;
+		color: var(--color-text-subtle);
 		text-transform: uppercase;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.06em;
 	}
 
 	.stat-value {
-		font-size: 1.9rem;
-		font-weight: 900;
-		line-height: 1.05;
+		font-size: 1.75rem;
+		font-weight: 700;
+		line-height: 1.1;
+		letter-spacing: -0.02em;
 		color: var(--color-text);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.stat-hint {

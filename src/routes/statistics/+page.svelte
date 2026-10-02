@@ -527,8 +527,8 @@
 	.progress-card {
 		background-color: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-sm);
+		border-radius: var(--radius-card);
+		box-shadow: none;
 		padding: var(--space-4) var(--space-5);
 		margin-top: var(--space-4);
 	}
@@ -639,11 +639,12 @@
 	}
 
 	.mode-dialog {
-		border: none;
-		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-xl);
 		padding: 0;
 		max-width: 30rem;
 		width: calc(100% - 2rem);
+		background-color: var(--color-surface);
 		box-shadow: var(--shadow-lg);
 		color: var(--color-text);
 	}

@@ -62,7 +62,6 @@
 		border-radius: var(--radius-lg);
 		background-color: var(--color-primary-soft);
 		color: var(--color-primary);
-		box-shadow: var(--shadow-clay-sm);
 	}
 
 	svg {

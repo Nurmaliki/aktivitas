@@ -65,7 +65,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: linear-gradient(160deg, #6bb3f0 0%, #3d92e2 60%, #2f7fce 100%);
+		background: #0f172a;
 		color: #fff;
 		padding: var(--space-6);
 		text-align: center;
@@ -136,10 +136,9 @@
 	}
 
 	.alarm-screen :global(.btn-secondary) {
-		background-color: rgba(255, 255, 255, 0.18);
+		background-color: rgba(255, 255, 255, 0.14);
 		color: #fff;
-		border-color: transparent;
-		box-shadow: var(--shadow-clay-sm);
+		border-color: rgba(255, 255, 255, 0.28);
 	}
 
 	@media (max-width: 480px) {

@@ -204,14 +204,12 @@
 		background-color: var(--color-surface-alt);
 		border-radius: var(--radius-full);
 		overflow: hidden;
-		box-shadow: var(--shadow-clay-inset);
 	}
 
 	.subtask-bar-fill {
 		display: block;
 		height: 100%;
 		background-color: var(--color-primary);
-		background-image: linear-gradient(145deg, #6bb3f0, #3d92e2);
 		transition: width 0.2s ease;
 	}
 
@@ -275,10 +273,10 @@
 	}
 
 	.icon-btn {
-		border: 1px solid transparent;
+		border: 1px solid var(--color-border);
 		background-color: var(--color-surface);
 		color: var(--color-text-muted);
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-md);
 		width: 1.75rem;
 		height: 1.75rem;
 		line-height: 1;
@@ -289,8 +287,7 @@
 	.icon-btn:hover:not(:disabled) {
 		color: #fff;
 		background-color: var(--color-primary);
-		border-color: transparent;
-		box-shadow: var(--shadow-clay-sm);
+		border-color: var(--color-primary);
 	}
 
 	.icon-btn:disabled {

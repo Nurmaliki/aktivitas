@@ -180,7 +180,6 @@
 
 	.has-data .day-bar {
 		background-color: var(--color-primary);
-		background-image: linear-gradient(180deg, #6bb3f0, #3d92e2);
 	}
 
 	.goal-met .day-bar {
